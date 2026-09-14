@@ -5,7 +5,8 @@ import {
   isToday,
   isYesterday,
 } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { enUS, zhCN } from "date-fns/locale";
+import { getLocale, t, tLocale, type Locale } from "@/i18n";
 
 export function noteTitle(content: string): string {
   const line = content.split("\n").find((l) => l.trim()) ?? "";
@@ -16,7 +17,7 @@ export function noteTitle(content: string): string {
     .replace(/^\d+\.\s+/, "")
     .replace(/[*_`]/g, "")
     .trim();
-  return stripped || "无标题";
+  return stripped || t("defaults.untitled");
 }
 
 export function noteExcerpt(content: string): string {
@@ -43,15 +44,19 @@ export function noteExcerpt(content: string): string {
   return parts.join(" ").slice(0, 88);
 }
 
-export function formatLastEdited(ts: number, now = Date.now()): string {
+export function formatLastEdited(ts: number, now = Date.now(), locale: Locale = getLocale()): string {
   const date = new Date(ts);
   const minutes = differenceInMinutes(now, date);
-  if (minutes < 1) return "刚刚";
-  if (minutes < 60) return `${minutes} 分钟前`;
-  if (isToday(date)) return format(date, "今天 HH:mm", { locale: zhCN });
-  if (isYesterday(date)) return format(date, "昨天 HH:mm", { locale: zhCN });
-  if (isThisYear(date)) return format(date, "M月d日 HH:mm", { locale: zhCN });
-  return format(date, "yyyy年M月d日", { locale: zhCN });
+  if (minutes < 1) return tLocale(locale, "time.justNow");
+  if (minutes < 60) return tLocale(locale, "time.minutesAgo", { n: minutes });
+  const clock = format(date, "HH:mm");
+  if (isToday(date)) return tLocale(locale, "time.today", { time: clock });
+  if (isYesterday(date)) return tLocale(locale, "time.yesterday", { time: clock });
+  const df = locale === "en" ? enUS : zhCN;
+  if (isThisYear(date)) {
+    return format(date, locale === "en" ? "MMM d HH:mm" : "M月d日 HH:mm", { locale: df });
+  }
+  return format(date, locale === "en" ? "MMM d, yyyy" : "yyyy年M月d日", { locale: df });
 }
 
 export function charCount(content: string): number {

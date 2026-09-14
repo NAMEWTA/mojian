@@ -24,3 +24,11 @@ export async function nativeReadData(): Promise<string | null> {
 export async function nativeWriteData(json: string): Promise<void> {
   await invoke<void>("write_data", { json });
 }
+
+export async function nativeWriteAsset(name: string, data: string): Promise<string> {
+  return invoke<string>("write_asset", { name, data });
+}
+
+export async function nativeReadAsset(name: string): Promise<string | null> {
+  return invoke<string | null>("read_asset", { name });
+}

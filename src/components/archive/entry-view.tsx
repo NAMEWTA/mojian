@@ -1,29 +1,37 @@
-import { FileText, Folder, FolderPlus, Menu, Plus, Trash2 } from "lucide-react";
+import { FolderPlus, Menu, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { DocTree } from "@/components/archive/doc-tree";
 import { FieldInput } from "@/components/archive/field-input";
+import { KindIcon } from "@/components/archive/kind-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatLastEdited } from "@/lib/notes/format";
-import { childrenOf, entryTitle, nodeTitle, useArchiveStore } from "@/lib/archive/store";
+import { childrenOf, useArchiveStore } from "@/lib/archive/store";
+import { glyphForBook } from "@/lib/archive/types";
+import { useI18n } from "@/i18n";
 
 export function EntryView({
   now,
   onOpenSidebar,
   onDeleteEntry,
+  onDeleteNode,
 }: {
   now: number;
   onOpenSidebar: () => void;
   onDeleteEntry: () => void;
+  onDeleteNode: (id: string) => void;
 }) {
+  const { t, locale } = useI18n();
   const books = useArchiveStore((s) => s.books);
   const entries = useArchiveStore((s) => s.entries);
   const docs = useArchiveStore((s) => s.docs);
   const selectedEntryId = useArchiveStore((s) => s.selectedEntryId);
   const selectEntry = useArchiveStore((s) => s.selectEntry);
-  const selectNode = useArchiveStore((s) => s.selectNode);
   const updateEntryTitle = useArchiveStore((s) => s.updateEntryTitle);
   const updateEntryValue = useArchiveStore((s) => s.updateEntryValue);
   const createDoc = useArchiveStore((s) => s.createDoc);
   const createFolder = useArchiveStore((s) => s.createFolder);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const entry = entries.find((item) => item.id === selectedEntryId) ?? null;
   const book = books.find((item) => item.id === entry?.bookId) ?? null;
@@ -40,27 +48,28 @@ export function EntryView({
           size="icon"
           className="md:hidden"
           onClick={onOpenSidebar}
-          aria-label="打开目录"
+          aria-label={t("nav.openTree")}
         >
           <Menu />
         </Button>
+        <KindIcon kind="entry" glyph={glyphForBook(book)} />
         <div className="min-w-0 flex-1">
           <Input
             value={entry.title}
             onChange={(event) => updateEntryTitle(entry.id, event.target.value)}
-            placeholder="档案名称"
-            aria-label="档案名称"
+            placeholder={t("entry.name")}
+            aria-label={t("entry.name")}
             className="h-10 border-0 bg-transparent px-0 font-serif text-lg font-semibold shadow-none focus-visible:ring-0 md:text-xl"
           />
           <p className="text-xs text-muted-foreground">
             {book.name}
             <span className="mx-1.5">·</span>
             <span className="tabular-nums" suppressHydrationWarning>
-              {formatLastEdited(entry.updatedAt, now)}
+              {formatLastEdited(entry.updatedAt, now, locale)}
             </span>
           </p>
         </div>
-        <Button type="button" variant="ghost" size="icon" onClick={onDeleteEntry} aria-label="删除档案">
+        <Button type="button" variant="ghost" size="icon" onClick={onDeleteEntry} aria-label={t("entry.delete")}>
           <Trash2 />
         </Button>
       </header>
@@ -68,10 +77,10 @@ export function EntryView({
       <div className="notes-scroll min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 py-6 md:px-8">
           <section>
-            <h3 className="mb-3 font-serif text-base font-semibold">档案属性</h3>
+            <h3 className="mb-3 font-serif text-base font-semibold">{t("entry.fields")}</h3>
             {book.fields.length === 0 ? (
               <p className="rounded-xl bg-secondary px-4 py-5 text-sm text-muted-foreground">
-                这本簿没有结构化字段。点左侧簿名，即可为整本簿添加电话、行业等属性。
+                {t("entry.noFields")}
               </p>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
@@ -92,46 +101,34 @@ export function EntryView({
 
           <section>
             <div className="mb-3 flex items-center justify-between gap-2">
-              <h3 className="font-serif text-base font-semibold">文稿</h3>
+              <h3 className="font-serif text-base font-semibold">{t("entry.docs")}</h3>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={() => createFolder(entry.id, null)}>
                   <FolderPlus />
-                  文件夹
+                  {t("entry.folder")}
                 </Button>
                 <Button type="button" size="sm" onClick={() => createDoc(entry.id, null)}>
                   <Plus />
-                  文档
+                  {t("entry.file")}
                 </Button>
               </div>
             </div>
             {roots.length === 0 ? (
               <p className="rounded-xl bg-secondary px-4 py-8 text-center text-sm text-muted-foreground">
-                还没有文稿。档案像文件夹，可以在里面放 Markdown 和子文件夹。
+                {t("entry.noDocs")}
               </p>
             ) : (
-              <ul className="divide-y divide-hairline rounded-xl border border-hairline bg-card">
-                {roots.map((child) => (
-                  <li key={child.id}>
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-accent/50"
-                      onClick={() => selectNode(child.id)}
-                    >
-                      {child.kind === "folder" ? (
-                        <Folder className="size-4 text-primary" />
-                      ) : (
-                        <FileText className="size-4 text-muted-foreground" />
-                      )}
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                        {nodeTitle(child)}
-                      </span>
-                      <span className="text-xs tabular-nums text-muted-foreground">
-                        {formatLastEdited(child.updatedAt, now)}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <div className="rounded-xl border border-hairline bg-card p-2">
+                <DocTree
+                  entryId={entry.id}
+                  parentId={null}
+                  now={now}
+                  showTime
+                  onDelete={onDeleteNode}
+                  collapsed={collapsed}
+                  toggle={(id) => setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }))}
+                />
+              </div>
             )}
           </section>
         </div>

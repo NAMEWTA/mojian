@@ -15,6 +15,7 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { noteTitle } from "@/lib/notes/format";
 import { useNotesStore } from "@/lib/notes/store";
+import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -36,6 +37,7 @@ function useIsDesktop() {
 }
 
 export function NotesApp() {
+  const { t } = useI18n();
   const searchRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const pendingFocus = useRef(false);
@@ -200,20 +202,20 @@ export function NotesApp() {
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>删除这则笔记？</AlertDialogTitle>
+            <AlertDialogTitle>{t("notes.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {selected
-                ? `「${noteTitle(selected.content)}」将被永久删除，无法撤销。`
-                : "当前没有选中的笔记。"}
+                ? t("notes.deleteBody", { name: noteTitle(selected.content) })
+                : t("notes.deleteEmpty")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogCancel>{t("delete.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleDelete}
             >
-              删除
+              {t("delete.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

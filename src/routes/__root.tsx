@@ -6,9 +6,10 @@ import {
 } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
+import { I18nBoot } from "@/i18n";
 import appCss from "../styles.css?url";
 
-const APP_NAME = "墨笺";
+const APP_NAME = "Mojian";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -18,7 +19,7 @@ export const Route = createRootRoute({
       { title: APP_NAME },
       {
         name: "description",
-        content: "墨笺：以档案为中心的笔记。簿、档案、文稿，写在同一棵目录树上。",
+        content: "Mojian: archive-first notes. Books, records, and documents on one tree.",
       },
       { name: "theme-color", content: "#f4f0e6" },
     ],
@@ -47,7 +48,9 @@ export const Route = createRootRoute({
       <body>
         <PreviewHostBridge />
         <AuthProvider>
-          <Outlet />
+          <I18nBoot>
+            <Outlet />
+          </I18nBoot>
         </AuthProvider>
         <Scripts />
       </body>

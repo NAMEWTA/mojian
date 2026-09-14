@@ -1,4 +1,11 @@
 [[permission]]
 identifier = "vault"
-description = "Read and write the 墨笺 vault file"
-commands.allow = ["pick_directory", "get_data_dir", "read_data", "write_data"]
+description = "Read and write the Mojian vault file and assets"
+commands.allow = [
+  "pick_directory",
+  "get_data_dir",
+  "read_data",
+  "write_data",
+  "write_asset",
+  "read_asset",
+]

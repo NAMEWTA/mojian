@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "墨笺",
-  "version": "0.0.1",
+  "productName": "Mojian",
+  "version": "0.0.2",
   "identifier": "app.mojian.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "墨笺",
+        "title": "Mojian",
         "width": 1280,
         "height": 840,
         "minWidth": 900,
@@ -23,7 +23,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src ipc: http://ipc.localhost https://ipc.localhost 'self'"
+      "csp": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src ipc: http://ipc.localhost https://ipc.localhost 'self'"
     }
   },
   "bundle": {
@@ -37,8 +37,8 @@
       "icons/icon.ico"
     ],
     "category": "Productivity",
-    "shortDescription": "以档案为中心的桌面笔记",
-    "longDescription": "墨笺：簿、档案、文稿写在同一棵目录树上。数据保存在本机文件夹，可放到网盘里迁移。",
+    "shortDescription": "Archive-first desktop notes",
+    "longDescription": "Mojian: books, records, and documents on one tree. Data stays in a local folder you can sync with a cloud disk.",
     "windows": {
       "nsis": {
         "installMode": "currentUser",

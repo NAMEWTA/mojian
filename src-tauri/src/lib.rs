@@ -9,11 +9,13 @@ pub fn run() {
             vault::get_data_dir,
             vault::read_data,
             vault::write_data,
+            vault::write_asset,
+            vault::read_asset,
         ])
         .setup(|app| {
             vault::ensure_default_dir(app.handle()).map_err(std::io::Error::other)?;
             Ok(())
         })
         .run(tauri::generate_context!())
-        .expect("failed to start 墨笺");
+        .expect("failed to start Mojian");
 }

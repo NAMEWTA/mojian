@@ -18,9 +18,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { entryTitle, getFocus, nodeTitle, useArchiveStore } from "@/lib/archive/store";
+import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 export function ArchiveApp() {
+  const { t } = useI18n();
   const searchRef = useRef<HTMLInputElement>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [newBookOpen, setNewBookOpen] = useState(false);
@@ -72,21 +74,23 @@ export function ArchiveApp() {
     if (deleteTarget.kind === "book") {
       const book = books.find((item) => item.id === deleteTarget.id);
       return {
-        title: "删除这本簿？",
-        body: `「${book?.name ?? "未命名簿"}」及其全部档案、文稿都会被删掉。`,
+        title: t("delete.bookTitle"),
+        body: t("delete.bookBody", { name: book?.name ?? t("defaults.untitledBook") }),
       };
     }
     if (deleteTarget.kind === "entry") {
       const entry = entries.find((item) => item.id === deleteTarget.id);
       return {
-        title: "删除这条档案？",
-        body: `「${entry ? entryTitle(entry) : "未命名"}」和它下面的文件都会被删掉。`,
+        title: t("delete.entryTitle"),
+        body: t("delete.entryBody", {
+          name: entry ? entryTitle(entry) : t("entry.untitled"),
+        }),
       };
     }
     const node = docs.find((item) => item.id === deleteTarget.id);
     return {
-      title: node?.kind === "folder" ? "删除这个文件夹？" : "删除这篇文档？",
-      body: `「${node ? nodeTitle(node) : "未命名"}」将被永久删除。`,
+      title: node?.kind === "folder" ? t("delete.folderTitle") : t("delete.fileTitle"),
+      body: t("delete.nodeBody", { name: node ? nodeTitle(node) : t("entry.untitled") }),
     };
   })();
 
@@ -94,7 +98,14 @@ export function ArchiveApp() {
     focus === "file" ? (
       <DocView now={now} onOpenSidebar={() => setSidebarOpen(true)} />
     ) : focus === "folder" ? (
-      <FolderView now={now} onOpenSidebar={() => setSidebarOpen(true)} />
+      <FolderView
+        now={now}
+        onOpenSidebar={() => setSidebarOpen(true)}
+        onDeleteFolder={() =>
+          selectedDocId && setDeleteTarget({ kind: "node", id: selectedDocId })
+        }
+        onDeleteNode={(id) => setDeleteTarget({ kind: "node", id })}
+      />
     ) : focus === "entry" ? (
       <EntryView
         now={now}
@@ -102,6 +113,7 @@ export function ArchiveApp() {
         onDeleteEntry={() =>
           selectedEntryId && setDeleteTarget({ kind: "entry", id: selectedEntryId })
         }
+        onDeleteNode={(id) => setDeleteTarget({ kind: "node", id })}
       />
     ) : (
       <BookView
@@ -174,12 +186,12 @@ export function ArchiveApp() {
             <AlertDialogDescription>{deleteCopy.body}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogCancel>{t("delete.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={confirmDelete}
             >
-              删除
+              {t("delete.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

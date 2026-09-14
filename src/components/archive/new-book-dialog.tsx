@@ -7,15 +7,24 @@ import { Label } from "@/components/ui/label";
 import { useArchiveStore } from "@/lib/archive/store";
 import {
   blankField,
-  COMPANY_FIELD_TEMPLATE,
-  PEOPLE_FIELD_TEMPLATE,
+  companyFieldTemplate,
+  peopleFieldTemplate,
+  type BookGlyph,
   type FieldDef,
 } from "@/lib/archive/types";
+import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 function fromTemplate(rows: Array<Omit<FieldDef, "id">>): FieldDef[] {
   return rows.map((row) => blankField(row));
 }
+
+const TEMPLATE_GLYPH: Record<"blank" | "notes" | "people" | "company", BookGlyph> = {
+  blank: "library",
+  notes: "notes",
+  people: "people",
+  company: "company",
+};
 
 export function NewBookDialog({
   open,
@@ -24,6 +33,7 @@ export function NewBookDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t } = useI18n();
   const books = useArchiveStore((s) => s.books);
   const createBook = useArchiveStore((s) => s.createBook);
   const [name, setName] = useState("");
@@ -40,21 +50,21 @@ export function NewBookDialog({
     setTemplate(next);
     if (next === "blank") setFields([]);
     if (next === "notes") {
-      setName((prev) => prev || "笔记簿");
+      setName((prev) => prev || t("newBook.notesName"));
       setFields([]);
     }
     if (next === "people") {
-      setName((prev) => prev || "人脉簿");
-      setFields(fromTemplate(PEOPLE_FIELD_TEMPLATE));
+      setName((prev) => prev || t("newBook.peopleName"));
+      setFields(fromTemplate(peopleFieldTemplate()));
     }
     if (next === "company") {
-      setName((prev) => prev || "企业簿");
-      setFields(fromTemplate(COMPANY_FIELD_TEMPLATE));
+      setName((prev) => prev || t("newBook.companyName"));
+      setFields(fromTemplate(companyFieldTemplate()));
     }
   }
 
   function submit() {
-    createBook(name, fields);
+    createBook(name, fields, TEMPLATE_GLYPH[template]);
     reset();
     onClose();
   }
@@ -70,33 +80,31 @@ export function NewBookDialog({
       }}
     >
       <DialogContent className="dialog-panel-lg">
-        <DialogTitle>新建一本簿</DialogTitle>
-        <DialogDescription>
-          先定簿名和字段。字段就是这本簿里每条档案都会有的属性，例如电话、行业。
-        </DialogDescription>
+        <DialogTitle>{t("newBook.title")}</DialogTitle>
+        <DialogDescription>{t("newBook.desc")}</DialogDescription>
 
         <div className="mt-4">
-          <Label htmlFor="new-book-name">簿名</Label>
+          <Label htmlFor="new-book-name">{t("newBook.name")}</Label>
           <Input
             id="new-book-name"
             className="mt-1"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="例如：项目簿"
+            placeholder={t("newBook.placeholder")}
           />
         </div>
 
         <div className="mt-4">
-          <p className="text-xs font-medium text-muted-foreground">从模板开始</p>
+          <p className="text-xs font-medium text-muted-foreground">{t("newBook.templates")}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {(
               [
-                ["blank", "空白"],
-                ["notes", "笔记"],
-                ["people", "人脉"],
-                ["company", "企业"],
+                ["blank", "newBook.blank"],
+                ["notes", "newBook.notes"],
+                ["people", "newBook.people"],
+                ["company", "newBook.company"],
               ] as const
-            ).map(([id, label]) => (
+            ).map(([id, key]) => (
               <button
                 key={id}
                 type="button"
@@ -108,23 +116,23 @@ export function NewBookDialog({
                     : "bg-secondary text-muted-foreground hover:text-foreground",
                 )}
               >
-                {label}
+                {t(key)}
               </button>
             ))}
           </div>
         </div>
 
         <div className="mt-5">
-          <p className="mb-2 text-xs font-medium text-muted-foreground">这本簿的字段</p>
+          <p className="mb-2 text-xs font-medium text-muted-foreground">{t("newBook.fields")}</p>
           <FieldListEditor fields={fields} books={books} onChange={setFields} />
         </div>
 
         <div className="mt-6 flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onClose}>
-            取消
+            {t("newBook.cancel")}
           </Button>
           <Button type="button" onClick={submit}>
-            创建这本簿
+            {t("newBook.create")}
           </Button>
         </div>
       </DialogContent>

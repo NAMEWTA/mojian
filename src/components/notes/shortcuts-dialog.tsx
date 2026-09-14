@@ -1,14 +1,15 @@
 import { useEffect } from "react";
+import { useI18n } from "@/i18n";
 import { useModSymbol } from "@/lib/utils";
 
 const SHORTCUTS = [
-  { keys: (mod: string) => `${mod} N`, label: "新建笔记" },
-  { keys: (mod: string) => `${mod} K  /`, label: "搜索" },
-  { keys: (mod: string) => `${mod} E`, label: "切换预览" },
-  { keys: (mod: string) => `${mod} Shift ⌫`, label: "删除当前笔记" },
-  { keys: () => "↑  ↓", label: "上一条 / 下一条" },
-  { keys: () => "Esc", label: "关闭搜索或侧栏" },
-  { keys: () => "?", label: "快捷键说明" },
+  { keys: (mod: string) => `${mod} N`, label: "shortcuts.new" },
+  { keys: (mod: string) => `${mod} K  /`, label: "shortcuts.search" },
+  { keys: (mod: string) => `${mod} E`, label: "shortcuts.preview" },
+  { keys: (mod: string) => `${mod} Shift ⌫`, label: "shortcuts.delete" },
+  { keys: () => "↑  ↓", label: "shortcuts.next" },
+  { keys: () => "Esc", label: "shortcuts.escape" },
+  { keys: () => "?", label: "shortcuts.help" },
 ];
 
 export function ShortcutsDialog({
@@ -18,6 +19,8 @@ export function ShortcutsDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t } = useI18n();
+
   useEffect(() => {
     if (!open) return;
     function onKey(event: KeyboardEvent) {
@@ -36,7 +39,7 @@ export function ShortcutsDialog({
       <button
         type="button"
         className="absolute inset-0 bg-foreground/30"
-        aria-label="关闭快捷键说明"
+        aria-label={t("shortcuts.close")}
         onClick={onClose}
       />
       <div
@@ -49,7 +52,7 @@ export function ShortcutsDialog({
           id="shortcuts-title"
           className="font-serif text-lg font-semibold tracking-tight"
         >
-          键盘快捷键
+          {t("shortcuts.title")}
         </h2>
         <ul className="mt-4 space-y-2.5">
           {SHORTCUTS.map((item) => (
@@ -57,7 +60,7 @@ export function ShortcutsDialog({
               key={item.label}
               className="flex items-center justify-between gap-4 text-sm"
             >
-              <span className="text-muted-foreground">{item.label}</span>
+              <span className="text-muted-foreground">{t(item.label)}</span>
               <kbd className="rounded-md bg-secondary px-2 py-1 font-mono text-xs text-foreground">
                 {item.keys(mod)}
               </kbd>

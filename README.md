@@ -10,7 +10,9 @@
 2. **档案**：簿下面的一条实体。点档案，右侧编辑属性。
 3. **文件夹 / 文稿**：档案里面的文件树。点文稿，右侧撰写 Markdown。
 
-数据默认写在「文档/墨笺/mojian.json」。也可以改绑到 iCloud、OneDrive、坚果云里的文件夹，换电脑后再选同一位置即可迁移。随时可导出 / 导入备份。
+第一次打开会看到一本**演示簿**，里面有演示档案、演示文件夹和带截图的说明文稿，按 01 → 04 走一遍即可上手。看完后可以整本删掉。
+
+数据默认写在 `Documents/mojian/mojian.json`。也可以改绑到 iCloud、OneDrive、坚果云里的文件夹，换电脑后再选同一位置即可迁移。随时可导出 / 导入备份。图片保存在同一目录下的 `assets/`，Markdown 里用相对路径 `assets/YYYY-MM-DD-uuid.ext`。
 
 ## 仓库布局
 
@@ -71,8 +73,8 @@ Mac 未签名时，第一次打开请到「系统设置 → 隐私与安全性�
 打一个版本标签即会同时打 Windows x64 与 Mac arm64 安装包，并挂到 GitHub Release：
 
 ```bash
-git tag v0.0.1
-git push origin v0.0.1
+git tag v0.0.2
+git push origin v0.0.2
 ```
 
 也可以在 Actions 里手动跑 **Release desktop**。

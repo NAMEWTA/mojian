@@ -2,6 +2,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { entryTitle } from "@/lib/archive/store";
 import type { Book, Entry, FieldDef } from "@/lib/archive/types";
+import { useI18n } from "@/i18n";
 
 const nativeClass =
   "h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground shadow-border outline-none transition-[box-shadow,border-color] duration-150 ease-out placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30";
@@ -21,6 +22,7 @@ export function FieldInput({
   onChange: (value: string) => void;
   onOpenRelated?: (entryId: string) => void;
 }) {
+  const { t } = useI18n();
   const inputType =
     field.type === "phone"
       ? "tel"
@@ -42,7 +44,7 @@ export function FieldInput({
           onChange={(event) => onChange(event.target.value)}
           className={nativeClass}
         >
-          <option value="">选择</option>
+          <option value="">{t("field.choose")}</option>
           {(field.options ?? []).map((option) => (
             <option key={option} value={option}>
               {option}
@@ -57,7 +59,7 @@ export function FieldInput({
             onChange={(event) => onChange(event.target.value)}
             className={cn(nativeClass, "min-w-0 flex-1")}
           >
-            <option value="">未关联</option>
+            <option value="">{t("field.unrelated")}</option>
             {entries
               .filter((entry) => entry.bookId === field.relationBookId)
               .map((entry) => (
@@ -72,7 +74,7 @@ export function FieldInput({
               className="h-10 shrink-0 rounded-lg px-3 text-xs font-medium text-primary hover:bg-accent"
               onClick={() => onOpenRelated(value)}
             >
-              打开
+              {t("field.open")}
             </button>
           ) : null}
         </div>
@@ -88,8 +90,9 @@ export function FieldInput({
       )}
       {field.type === "relation" ? (
         <p className="text-xs text-muted-foreground">
-          关联到
-          {books.find((book) => book.id === field.relationBookId)?.name ?? "另一本簿"}
+          {t("field.relatedTo", {
+            name: books.find((book) => book.id === field.relationBookId)?.name ?? t("field.anotherBook"),
+          })}
         </p>
       ) : null}
     </div>

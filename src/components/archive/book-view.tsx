@@ -1,17 +1,26 @@
 import { Menu, Plus, Trash2 } from "lucide-react";
 import { FieldListEditor } from "@/components/archive/field-list-editor";
+import { KindIcon } from "@/components/archive/kind-icon";
 import { Button } from "@/components/ui/button";
 import { formatLastEdited } from "@/lib/notes/format";
 import { entryTitle, useArchiveStore } from "@/lib/archive/store";
 import type { Book, Entry } from "@/lib/archive/types";
+import { glyphForBook } from "@/lib/archive/types";
+import { useI18n } from "@/i18n";
 
-function fieldPreview(book: Book, entry: Entry, fieldId: string, allEntries: Entry[]): string {
+function fieldPreview(
+  book: Book,
+  entry: Entry,
+  fieldId: string,
+  allEntries: Entry[],
+  empty: string,
+): string {
   const field = book.fields.find((item) => item.id === fieldId);
   const raw = entry.values[fieldId] ?? "";
-  if (!field || !raw) return "—";
+  if (!field || !raw) return empty;
   if (field.type === "relation") {
     const related = allEntries.find((item) => item.id === raw);
-    return related ? entryTitle(related) : "—";
+    return related ? entryTitle(related) : empty;
   }
   return raw;
 }
@@ -27,6 +36,7 @@ export function BookView({
   onCreateEntry: (bookId: string) => void;
   onDeleteBook: (bookId: string) => void;
 }) {
+  const { t, locale } = useI18n();
   const books = useArchiveStore((s) => s.books);
   const entries = useArchiveStore((s) => s.entries);
   const selectedBookId = useArchiveStore((s) => s.selectedBookId);
@@ -37,10 +47,8 @@ export function BookView({
   if (!book) {
     return (
       <section className="flex min-h-0 flex-1 flex-col items-center justify-center bg-background px-6 text-center">
-        <p className="font-serif text-2xl tracking-tight">从一本簿开始</p>
-        <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-          人脉、企业，或你自己定义的分类。先定字段，再往里面放档案。
-        </p>
+        <p className="font-serif text-2xl tracking-tight">{t("book.emptyTitle")}</p>
+        <p className="mt-2 max-w-sm text-sm text-muted-foreground">{t("book.emptyHint")}</p>
       </section>
     );
   }
@@ -59,16 +67,17 @@ export function BookView({
           size="icon"
           className="md:hidden"
           onClick={onOpenSidebar}
-          aria-label="打开目录"
+          aria-label={t("nav.openTree")}
         >
           <Menu />
         </Button>
+        <KindIcon kind="book" glyph={glyphForBook(book)} />
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-serif text-lg font-semibold tracking-tight md:text-xl">
             {book.name}
           </h2>
           <p className="text-xs text-muted-foreground">
-            {book.fields.length} 个字段 · {rows.length} 条档案
+            {t("book.meta", { fields: book.fields.length, entries: rows.length })}
           </p>
         </div>
         <Button
@@ -76,7 +85,7 @@ export function BookView({
           variant="ghost"
           size="icon"
           onClick={() => onDeleteBook(book.id)}
-          aria-label="删除这本簿"
+          aria-label={t("book.delete")}
         >
           <Trash2 />
         </Button>
@@ -86,16 +95,14 @@ export function BookView({
           onClick={() => onCreateEntry(book.id)}
         >
           <Plus />
-          新建条目
+          {t("book.newEntry")}
         </Button>
       </header>
 
       <div className="notes-scroll min-h-0 flex-1 overflow-auto">
         <div className="border-b border-hairline px-4 py-5 md:px-6">
-          <h3 className="font-serif text-base font-semibold">这本簿的字段</h3>
-          <p className="mt-1 mb-4 text-xs text-muted-foreground">
-            每条档案都像一个文件夹，这些字段是它的属性。在这里增删、改类型即可。
-          </p>
+          <h3 className="font-serif text-base font-semibold">{t("book.fieldsTitle")}</h3>
+          <p className="mt-1 mb-4 text-xs text-muted-foreground">{t("book.fieldsHint")}</p>
           <FieldListEditor
             fields={book.fields}
             books={books}
@@ -106,26 +113,24 @@ export function BookView({
 
         {rows.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-            <p className="font-serif text-xl">还没有档案</p>
-            <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-              字段定好之后，就可以往这本簿里加人、企业或其他条目。
-            </p>
+            <p className="font-serif text-xl">{t("book.noEntriesTitle")}</p>
+            <p className="mt-2 max-w-sm text-sm text-muted-foreground">{t("book.noEntriesHint")}</p>
             <Button type="button" className="mt-5 rounded-xl" onClick={() => onCreateEntry(book.id)}>
               <Plus />
-              新建第一条
+              {t("book.firstEntry")}
             </Button>
           </div>
         ) : (
           <table className="w-full min-w-full text-left text-sm">
             <thead className="sticky top-0 bg-background">
               <tr className="border-b border-hairline text-xs text-muted-foreground">
-                <th className="px-4 py-3 font-medium md:px-6">名称</th>
+                <th className="px-4 py-3 font-medium md:px-6">{t("book.colName")}</th>
                 {columns.map((field) => (
                   <th key={field.id} className="hidden px-4 py-3 font-medium md:table-cell">
                     {field.label}
                   </th>
                 ))}
-                <th className="px-4 py-3 font-medium md:px-6">更新</th>
+                <th className="px-4 py-3 font-medium md:px-6">{t("book.colUpdated")}</th>
               </tr>
             </thead>
             <tbody>
@@ -141,11 +146,11 @@ export function BookView({
                       key={field.id}
                       className="hidden max-w-40 truncate px-4 py-3 text-muted-foreground md:table-cell"
                     >
-                      {fieldPreview(book, entry, field.id, entries)}
+                      {fieldPreview(book, entry, field.id, entries, t("book.emptyValue"))}
                     </td>
                   ))}
-                  <td className="px-4 py-3 text-xs tabular-nums text-muted-foreground md:px-6">
-                    {formatLastEdited(entry.updatedAt, now)}
+                  <td className="px-4 py-3 text-xs tabular-nums text-muted-foreground md:px-6" suppressHydrationWarning>
+                    {formatLastEdited(entry.updatedAt, now, locale)}
                   </td>
                 </tr>
               ))}

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { blankField, FIELD_TYPES, type Book, type FieldDef, type FieldType } from "@/lib/archive/types";
+import { useI18n } from "@/i18n";
 
 const selectClass =
   "h-10 w-full rounded-lg border border-border bg-card px-2 text-sm text-foreground";
@@ -18,6 +19,8 @@ export function FieldListEditor({
   excludeBookId?: string;
   onChange: (fields: FieldDef[]) => void;
 }) {
+  const { t } = useI18n();
+
   function patch(index: number, next: FieldDef) {
     onChange(fields.map((field, i) => (i === index ? next : field)));
   }
@@ -35,7 +38,7 @@ export function FieldListEditor({
     <div>
       {fields.length === 0 ? (
         <p className="rounded-xl bg-secondary px-4 py-5 text-sm text-muted-foreground">
-          还没有字段。加上电话、行业、日期之类，这本簿里的每条档案都会带上它们。
+          {t("field.empty")}
         </p>
       ) : (
         <ul className="space-y-3">
@@ -43,7 +46,7 @@ export function FieldListEditor({
             <li key={field.id} className="rounded-xl bg-secondary p-3">
               <div className="flex flex-wrap items-end gap-2">
                 <div className="min-w-0 flex-1">
-                  <Label htmlFor={`${field.id}-label`}>字段名</Label>
+                  <Label htmlFor={`${field.id}-label`}>{t("field.label")}</Label>
                   <Input
                     id={`${field.id}-label`}
                     className="mt-1 h-10"
@@ -52,7 +55,7 @@ export function FieldListEditor({
                   />
                 </div>
                 <div className="w-28">
-                  <Label htmlFor={`${field.id}-type`}>类型</Label>
+                  <Label htmlFor={`${field.id}-type`}>{t("field.type")}</Label>
                   <select
                     id={`${field.id}-type`}
                     className={`mt-1 ${selectClass}`}
@@ -62,8 +65,8 @@ export function FieldListEditor({
                     }
                   >
                     {FIELD_TYPES.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.label}
+                      <option key={type} value={type}>
+                        {t(`field.type.${type}`)}
                       </option>
                     ))}
                   </select>
@@ -73,7 +76,7 @@ export function FieldListEditor({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    aria-label="上移"
+                    aria-label={t("field.moveUp")}
                     disabled={index === 0}
                     onClick={() => move(index, -1)}
                   >
@@ -83,7 +86,7 @@ export function FieldListEditor({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    aria-label="下移"
+                    aria-label={t("field.moveDown")}
                     disabled={index === fields.length - 1}
                     onClick={() => move(index, 1)}
                   >
@@ -93,7 +96,7 @@ export function FieldListEditor({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    aria-label="删除字段"
+                    aria-label={t("field.delete")}
                     onClick={() => onChange(fields.filter((item) => item.id !== field.id))}
                   >
                     <Trash2 />
@@ -102,7 +105,7 @@ export function FieldListEditor({
               </div>
               {field.type === "select" ? (
                 <div className="mt-2">
-                  <Label htmlFor={`${field.id}-options`}>选项，用顿号或逗号分开</Label>
+                  <Label htmlFor={`${field.id}-options`}>{t("field.options")}</Label>
                   <Input
                     id={`${field.id}-options`}
                     className="mt-1 h-10"
@@ -121,7 +124,7 @@ export function FieldListEditor({
               ) : null}
               {field.type === "relation" ? (
                 <div className="mt-2">
-                  <Label htmlFor={`${field.id}-rel`}>关联到哪本簿</Label>
+                  <Label htmlFor={`${field.id}-rel`}>{t("field.relationBook")}</Label>
                   <select
                     id={`${field.id}-rel`}
                     className={`mt-1 ${selectClass}`}
@@ -133,7 +136,7 @@ export function FieldListEditor({
                       })
                     }
                   >
-                    <option value="">选择</option>
+                    <option value="">{t("field.choose")}</option>
                     {books
                       .filter((item) => item.id !== excludeBookId)
                       .map((item) => (
@@ -152,10 +155,10 @@ export function FieldListEditor({
         type="button"
         variant="outline"
         className="mt-3 w-full rounded-xl"
-        onClick={() => onChange([...fields, blankField({ label: "新字段" })])}
+        onClick={() => onChange([...fields, blankField({ label: t("field.new") })])}
       >
         <Plus />
-        添加字段
+        {t("field.add")}
       </Button>
     </div>
   );

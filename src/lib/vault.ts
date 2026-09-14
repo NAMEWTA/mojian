@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import {
   isDesktopApp,
   nativeGetDataDir,
@@ -143,6 +144,26 @@ async function ensurePermission(handle: FileSystemDirectoryHandle): Promise<bool
 
 let boundHandle: FileSystemDirectoryHandle | null = null;
 
+export async function writeAssetToBoundFolder(name: string, blob: Blob): Promise<void> {
+  if (!boundHandle) return;
+  const dir = await boundHandle.getDirectoryHandle("assets", { create: true });
+  const file = await dir.getFileHandle(name, { create: true });
+  const writable = await file.createWritable();
+  await writable.write(blob);
+  await writable.close();
+}
+
+export async function readAssetFromBoundFolder(name: string): Promise<Blob | null> {
+  if (!boundHandle) return null;
+  try {
+    const dir = await boundHandle.getDirectoryHandle("assets");
+    const file = await dir.getFileHandle(name);
+    return await file.getFile();
+  } catch {
+    return null;
+  }
+}
+
 export async function writeToDirectory(handle = boundHandle): Promise<void> {
   if (isDesktopApp()) {
     await writeDesktop();
@@ -164,13 +185,13 @@ export async function pickDirectory(): Promise<void> {
       bound: true,
       folderName: dir,
       supported: true,
-      message: `已绑定「${dir}」。可把此文件夹放进 iCloud、OneDrive 或坚果云。`,
+      message: t("data.bindHint", { name: dir }),
     });
     await writeDesktop();
     return;
   }
   if (!canPickDirectory()) {
-    throw new Error("当前浏览器不能选择文件夹。请用 Chrome 或 Edge，或改用导出备份。");
+    throw new Error(t("data.noPicker"));
   }
   const handle = await window.showDirectoryPicker({ mode: "readwrite" });
   boundHandle = handle;
@@ -179,7 +200,7 @@ export async function pickDirectory(): Promise<void> {
     bound: true,
     folderName: handle.name,
     supported: true,
-    message: `已绑定「${handle.name}」。可把此文件夹放进 iCloud、OneDrive 或坚果云。`,
+    message: t("data.bindHint", { name: handle.name }),
   });
   await writeToDirectory(handle);
 }
@@ -198,7 +219,7 @@ export async function restoreDirectory(): Promise<void> {
         const parsed = JSON.parse(text) as unknown;
         if (isBackupFile(parsed)) applySnapshot(parsed);
       } catch {
-        useVaultUi.getState().setStatus({ message: "数据文件损坏，仍使用本机缓存。" });
+        useVaultUi.getState().setStatus({ message: t("data.corrupt") });
       }
     } else {
       await writeDesktop();
@@ -216,7 +237,7 @@ export async function restoreDirectory(): Promise<void> {
       useVaultUi.getState().setStatus({
         bound: false,
         folderName: handle.name,
-        message: "需要重新允许访问这个文件夹。",
+        message: t("data.needPermission"),
       });
       return;
     }
@@ -232,7 +253,7 @@ export async function restoreDirectory(): Promise<void> {
     }
   } catch {
     useVaultUi.getState().setStatus({
-      message: "读取数据目录失败，仍使用本机缓存。",
+      message: t("data.readFail"),
     });
   }
 }
@@ -245,14 +266,14 @@ export function downloadBackup() {
   const stamp = new Date().toISOString().slice(0, 10);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `墨笺备份-${stamp}.json`;
+  link.download = t("data.backupFile", { date: stamp });
   link.click();
   URL.revokeObjectURL(url);
 }
 
 export async function importBackupFile(file: File) {
   const parsed = JSON.parse(await file.text()) as unknown;
-  if (!isBackupFile(parsed)) throw new Error("不是墨笺备份文件。");
+  if (!isBackupFile(parsed)) throw new Error(t("data.notBackup"));
   applySnapshot(parsed);
   await writeToDirectory();
 }

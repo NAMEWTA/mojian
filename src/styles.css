@@ -27,6 +27,14 @@
   --color-sidebar: #e8e2d4;
   --color-sidebar-foreground: #1c1915;
   --color-mark: #c5d4cf;
+  --color-kind-people: #3d6b63;
+  --color-kind-people-soft: #d7e6e1;
+  --color-kind-company: #6b5340;
+  --color-kind-company-soft: #ebe2d4;
+  --color-kind-folder: #8a5a22;
+  --color-kind-folder-bg: #efe4c8;
+  --color-kind-file: #5c564c;
+  --color-kind-file-bg: #ddd6c6;
   --color-hairline: #cfc6b4;
 
   --radius-xs: 0.25rem;
@@ -79,6 +87,71 @@
   :focus-visible {
     outline: 2px solid var(--color-ring);
     outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .kind-icon {
+    display: flex;
+    width: 1.35rem;
+    height: 1.35rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .kind-icon svg {
+    width: 0.8rem;
+    height: 0.8rem;
+    stroke-width: 2.2;
+  }
+
+  .kind-icon-book {
+    border-radius: 0.3rem;
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
+  }
+
+  .kind-icon-book[data-glyph="people"] {
+    background: var(--color-kind-people);
+  }
+
+  .kind-icon-book[data-glyph="company"] {
+    background: var(--color-kind-company);
+  }
+
+  .kind-icon-entry {
+    border-radius: 999px;
+    background: var(--color-card);
+    color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-border);
+  }
+
+  .kind-icon-entry[data-glyph="people"] {
+    background: var(--color-kind-people-soft);
+    color: var(--color-kind-people);
+  }
+
+  .kind-icon-entry[data-glyph="company"] {
+    background: var(--color-kind-company-soft);
+    color: var(--color-kind-company);
+  }
+
+  .kind-icon-folder {
+    border-radius: 0.3rem;
+    background: var(--color-kind-folder-bg);
+    color: var(--color-kind-folder);
+  }
+
+  .kind-icon-folder svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+
+  .kind-icon-file {
+    border-radius: 0.25rem;
+    background: var(--color-kind-file-bg);
+    color: var(--color-kind-file);
   }
 }
 

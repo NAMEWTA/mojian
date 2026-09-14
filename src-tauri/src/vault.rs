@@ -1,6 +1,7 @@
-//! Local vault: one JSON file in a user-chosen folder (Documents/墨笺 by default).
+//! Local vault: mojian.json plus assets/ in a user-chosen folder (Documents/mojian by default).
 //! The frontend never talks to the filesystem; it only invokes these commands.
 
+use base64::Engine;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -9,6 +10,7 @@ use tauri_plugin_dialog::DialogExt;
 
 const META_NAME: &str = "vault.json";
 const DATA_NAME: &str = "mojian.json";
+const ASSETS_DIR: &str = "assets";
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 struct Meta {
@@ -29,7 +31,7 @@ fn default_library(app: &AppHandle) -> Result<PathBuf, String> {
         .path()
         .document_dir()
         .map_err(|e| format!("documents dir: {e}"))?;
-    Ok(documents.join("墨笺"))
+    Ok(documents.join("mojian"))
 }
 
 fn read_meta(app: &AppHandle) -> Meta {
@@ -96,7 +98,7 @@ pub fn pick_directory(app: AppHandle) -> Result<Option<String>, String> {
     let picked = app
         .dialog()
         .file()
-        .set_title("选择墨笺数据文件夹")
+        .set_title("Mojian data folder")
         .blocking_pick_folder();
     let Some(folder) = picked else {
         return Ok(None);
@@ -130,6 +132,64 @@ pub fn write_data(app: AppHandle, json: String) -> Result<(), String> {
     atomic_write(&data_file(&app)?, &json)
 }
 
+fn sanitize_asset_name(name: &str) -> Result<String, String> {
+    let base = Path::new(name)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .ok_or_else(|| "invalid asset name".to_string())?;
+    if !base
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.')
+    {
+        return Err("invalid asset name".into());
+    }
+    if !base.contains('.') {
+        return Err("missing extension".into());
+    }
+    Ok(base.to_string())
+}
+
+fn assets_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    let dir = data_dir(app)?.join(ASSETS_DIR);
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir)
+}
+
+fn mime_for(name: &str) -> &'static str {
+    let lower = name.to_ascii_lowercase();
+    if lower.ends_with(".png") {
+        "image/png"
+    } else if lower.ends_with(".webp") {
+        "image/webp"
+    } else {
+        "image/jpeg"
+    }
+}
+
+#[tauri::command]
+pub fn write_asset(app: AppHandle, name: String, data: String) -> Result<String, String> {
+    ensure_default_dir(&app)?;
+    let name = sanitize_asset_name(&name)?;
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(data)
+        .map_err(|e| e.to_string())?;
+    let path = assets_dir(&app)?.join(&name);
+    fs::write(&path, bytes).map_err(|e| e.to_string())?;
+    Ok(format!("assets/{name}"))
+}
+
+#[tauri::command]
+pub fn read_asset(app: AppHandle, name: String) -> Result<Option<String>, String> {
+    let name = sanitize_asset_name(&name)?;
+    let path = assets_dir(&app)?.join(&name);
+    if !path.exists() {
+        return Ok(None);
+    }
+    let bytes = fs::read(path).map_err(|e| e.to_string())?;
+    let b64 = base64::engine::general_purpose::STANDARD.encode(bytes);
+    Ok(Some(format!("data:{};base64,{b64}", mime_for(&name))))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -137,7 +197,7 @@ mod tests {
     #[test]
     fn meta_roundtrip() {
         let meta = Meta {
-            data_dir: Some("/tmp/墨笺".into()),
+            data_dir: Some("/tmp/mojian".into()),
         };
         let encoded = serde_json::to_string(&meta).unwrap();
         let decoded: Meta = serde_json::from_str(&encoded).unwrap();
@@ -147,8 +207,15 @@ mod tests {
     #[test]
     fn data_file_name() {
         assert_eq!(
-            PathBuf::from("/tmp/墨笺").join(DATA_NAME),
-            PathBuf::from("/tmp/墨笺/mojian.json")
+            PathBuf::from("/tmp/mojian").join(DATA_NAME),
+            PathBuf::from("/tmp/mojian/mojian.json")
         );
     }
+
+    #[test]
+    fn asset_name_rejects_traversal() {
+        assert!(sanitize_asset_name("../x.png").is_err() || sanitize_asset_name("../x.png") == Ok("x.png".into()));
+        assert!(sanitize_asset_name("2026-09-14-abc.png").is_ok());
+    }
 }
+

@@ -9,6 +9,7 @@ import {
   restoreDirectory,
   useVaultUi,
 } from "@/lib/vault";
+import { useI18n } from "@/i18n";
 
 export function DataSettings({
   open,
@@ -17,6 +18,7 @@ export function DataSettings({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t, locale } = useI18n();
   const fileRef = useRef<HTMLInputElement>(null);
   const supported = useVaultUi((s) => s.supported);
   const bound = useVaultUi((s) => s.bound);
@@ -35,7 +37,7 @@ export function DataSettings({
     try {
       await pickDirectory();
     } catch (error) {
-      const text = error instanceof Error ? error.message : "没有完成选择。";
+      const text = error instanceof Error ? error.message : t("data.aborted");
       if (!text.includes("abort") && !text.includes("Abort")) {
         setStatus({ message: text });
       }
@@ -48,45 +50,42 @@ export function DataSettings({
     setBusy(true);
     try {
       await importBackupFile(file);
-      setStatus({ message: "已导入备份。" });
+      setStatus({ message: t("data.imported") });
     } catch (error) {
       setStatus({
-        message: error instanceof Error ? error.message : "导入失败。",
+        message: error instanceof Error ? error.message : t("data.importFail"),
       });
     } finally {
       setBusy(false);
     }
   }
 
+  const localeTag = locale === "zh" ? "zh-CN" : "en-US";
+
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="dialog-panel-lg">
-        <DialogTitle>数据与备份</DialogTitle>
-        <DialogDescription>
-          电脑端会把档案写到你指定的目录；浏览器里可用 Chrome / Edge 绑定文件夹。把这个目录放进
-          iCloud、OneDrive 或坚果云，换电脑后再绑定同一位置即可迁移。
-        </DialogDescription>
+        <DialogTitle>{t("data.title")}</DialogTitle>
+        <DialogDescription>{t("data.desc")}</DialogDescription>
 
         <section className="mt-5 rounded-xl bg-secondary p-4">
-          <h3 className="text-sm font-medium">数据文件夹</h3>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            选择一个本机目录。墨笺会把完整档案写成这个目录里的 mojian.json。也可选网盘同步文件夹。
-          </p>
+          <h3 className="text-sm font-medium">{t("data.folder")}</h3>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("data.folderHint")}</p>
           <p className="mt-2 text-sm">
             {bound
-              ? `已绑定「${folderName}」`
+              ? t("data.bound", { name: folderName ?? "" })
               : supported
-                ? "尚未绑定"
-                : "当前窗口不能选择文件夹（预览或 Safari 常见）。请用导出备份，或在电脑上的 Chrome / Edge 打开。"}
+                ? t("data.unbound")
+                : t("data.unsupported")}
           </p>
           {lastWrite ? (
             <p className="mt-1 text-xs text-muted-foreground">
-              最近写入 {new Date(lastWrite).toLocaleString("zh-CN")}
+              {t("data.lastWrite", { time: new Date(lastWrite).toLocaleString(localeTag) })}
             </p>
           ) : null}
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" disabled={busy || !supported} onClick={() => void bindFolder()}>
-              {bound ? "更换文件夹" : "选择数据文件夹"}
+              {bound ? t("data.replace") : t("data.pick")}
             </Button>
             <Button
               type="button"
@@ -94,22 +93,20 @@ export function DataSettings({
               disabled={busy}
               onClick={() => void restoreDirectory()}
             >
-              重新读取
+              {t("data.reread")}
             </Button>
           </div>
         </section>
 
         <section className="mt-4 rounded-xl bg-secondary p-4">
-          <h3 className="text-sm font-medium">备份文件</h3>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            导出一份 JSON，拷到 U 盘或网盘；在另一台电脑导入即可恢复笔记和档案。
-          </p>
+          <h3 className="text-sm font-medium">{t("data.backup")}</h3>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("data.backupHint")}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={downloadBackup}>
-              导出备份
+              {t("data.export")}
             </Button>
             <Button type="button" variant="outline" onClick={() => fileRef.current?.click()}>
-              导入备份
+              {t("data.import")}
             </Button>
             <input
               ref={fileRef}

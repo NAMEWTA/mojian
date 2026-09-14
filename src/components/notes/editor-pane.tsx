@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import { charCount, formatLastEdited, noteTitle } from "@/lib/notes/format";
 import { useNotesStore } from "@/lib/notes/store";
+import { useI18n } from "@/i18n";
 import { cn, useModSymbol } from "@/lib/utils";
 
 export function EditorPane({
@@ -24,6 +25,7 @@ export function EditorPane({
   onRequestDelete: () => void;
   onCreate: () => void;
 }) {
+  const { t, locale } = useI18n();
   const notes = useNotesStore((s) => s.notes);
   const selectedId = useNotesStore((s) => s.selectedId);
   const preview = useNotesStore((s) => s.preview);
@@ -42,22 +44,20 @@ export function EditorPane({
             size="icon"
             className="md:hidden"
             onClick={onOpenSidebar}
-            aria-label="打开目录"
+            aria-label={t("nav.openTree")}
           >
             <Menu />
           </Button>
-          <span className="font-serif text-lg">墨笺</span>
+          <span className="font-serif text-lg">{t("app.name")}</span>
         </header>
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-          <p className="font-serif text-2xl tracking-tight text-balance">
-            从一张空白的纸开始
-          </p>
+          <p className="font-serif text-2xl tracking-tight text-balance">{t("notes.emptyTitle")}</p>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
-            新建一则笔记，第一行会成为标题。内容只保存在这台设备上。
+            {t("notes.emptyHint")}
           </p>
           <Button type="button" className="mt-6 h-11 rounded-xl px-5" onClick={onCreate}>
             <Plus />
-            新建笔记
+            {t("notes.new")}
           </Button>
         </div>
       </section>
@@ -91,7 +91,7 @@ export function EditorPane({
           size="icon"
           className="md:hidden"
           onClick={onOpenSidebar}
-          aria-label="打开目录"
+          aria-label={t("nav.openTree")}
         >
           <Menu />
         </Button>
@@ -100,7 +100,7 @@ export function EditorPane({
             {title}
           </h2>
           <p className="text-xs tabular-nums text-muted-foreground" suppressHydrationWarning>
-            最后编辑 {formatLastEdited(active.updatedAt, now)}
+            {t("notes.lastEdited", { time: formatLastEdited(active.updatedAt, now, locale) })}
           </p>
         </div>
         <div className="flex items-center gap-1">
@@ -110,7 +110,7 @@ export function EditorPane({
             size="icon"
             className="md:hidden"
             onClick={() => setPreview(!preview)}
-            aria-label={preview ? "返回编辑" : "预览 Markdown"}
+            aria-label={preview ? t("doc.edit") : t("doc.preview")}
             aria-pressed={preview}
           >
             {preview ? <Pencil /> : <Eye />}
@@ -127,7 +127,7 @@ export function EditorPane({
               onClick={() => setPreview(false)}
               aria-pressed={!preview}
             >
-              编辑
+              {t("notes.edit")}
             </button>
             <button
               type="button"
@@ -141,7 +141,7 @@ export function EditorPane({
               aria-pressed={preview}
             >
               {preview ? <Eye className="size-3.5" /> : null}
-              预览
+              {t("notes.preview")}
             </button>
           </div>
           <Tooltip>
@@ -151,12 +151,12 @@ export function EditorPane({
                 variant="ghost"
                 size="icon"
                 onClick={onRequestDelete}
-                aria-label="删除笔记"
+                aria-label={t("notes.delete")}
               >
                 <Trash2 />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>删除 {mod} Shift ⌫</TooltipContent>
+            <TooltipContent>{t("notes.deleteShortcut", { mod })}</TooltipContent>
           </Tooltip>
         </div>
       </header>
@@ -172,9 +172,9 @@ export function EditorPane({
               value={active.content}
               onChange={(event) => updateNote(active.id, event.target.value)}
               onKeyDown={onEditorKeyDown}
-              placeholder="开始书写，第一行会成为标题。"
+              placeholder={t("notes.placeholder")}
               spellCheck
-              aria-label="笔记正文"
+              aria-label={t("notes.aria")}
               className="editor-field min-h-96 w-full flex-1 resize-none bg-transparent font-serif text-lg leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/80"
             />
           )}
@@ -182,9 +182,9 @@ export function EditorPane({
       </div>
 
       <footer className="flex items-center justify-between border-t border-hairline px-4 py-2 text-xs text-muted-foreground md:px-6">
-        <span className="tabular-nums">{count} 字</span>
-        <span className="hidden sm:inline">按 ? 查看快捷键 · 已自动保存</span>
-        <span className="sm:hidden">已自动保存</span>
+        <span className="tabular-nums">{t("doc.chars", { n: count })}</span>
+        <span className="hidden sm:inline">{t("notes.savedHint")}</span>
+        <span className="sm:hidden">{t("notes.saved")}</span>
       </footer>
     </section>
   );

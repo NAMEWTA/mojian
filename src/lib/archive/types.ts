@@ -1,14 +1,18 @@
+import { t } from "@/i18n";
+
 export const FIELD_TYPES = [
-  { id: "text", label: "文本" },
-  { id: "phone", label: "电话" },
-  { id: "email", label: "邮箱" },
-  { id: "url", label: "链接" },
-  { id: "date", label: "日期" },
-  { id: "select", label: "选项" },
-  { id: "relation", label: "关联" },
+  "text",
+  "phone",
+  "email",
+  "url",
+  "date",
+  "select",
+  "relation",
 ] as const;
 
-export type FieldType = (typeof FIELD_TYPES)[number]["id"];
+export type FieldType = (typeof FIELD_TYPES)[number];
+
+export type BookGlyph = "people" | "company" | "notes" | "library";
 
 export type FieldDef = {
   id: string;
@@ -22,6 +26,7 @@ export type Book = {
   id: string;
   name: string;
   fields: FieldDef[];
+  glyph?: BookGlyph;
   createdAt: number;
   updatedAt: number;
 };
@@ -51,22 +56,43 @@ export type FocusKind = "book" | "entry" | "folder" | "file";
 export function blankField(partial: Partial<FieldDef> = {}): FieldDef {
   return {
     id: crypto.randomUUID(),
-    label: "新字段",
+    label: t("field.new"),
     type: "text",
     ...partial,
   };
 }
 
-export const PEOPLE_FIELD_TEMPLATE: Array<Omit<FieldDef, "id">> = [
-  { label: "电话", type: "phone" },
-  { label: "邮箱", type: "email" },
-  { label: "身份", type: "text" },
-  { label: "认识途径", type: "select", options: ["朋友介绍", "工作往来", "活动偶遇", "旧识"] },
-];
+export function glyphForBook(book: Pick<Book, "id"> & { glyph?: BookGlyph }): BookGlyph {
+  if (book.glyph) return book.glyph;
+  if (book.id === "book-demo" || book.id === "book-notes") return "notes";
+  if (book.id === "book-people") return "people";
+  if (book.id === "book-company") return "company";
+  return "library";
+}
 
-export const COMPANY_FIELD_TEMPLATE: Array<Omit<FieldDef, "id">> = [
-  { label: "行业", type: "text" },
-  { label: "官网", type: "url" },
-  { label: "电话", type: "phone" },
-  { label: "地址", type: "text" },
-];
+export function peopleFieldTemplate(): Array<Omit<FieldDef, "id">> {
+  return [
+    { label: t("template.phone"), type: "phone" },
+    { label: t("template.email"), type: "email" },
+    { label: t("template.role"), type: "text" },
+    {
+      label: t("template.howWeMet"),
+      type: "select",
+      options: [
+        t("template.friend"),
+        t("template.work"),
+        t("template.event"),
+        t("template.old"),
+      ],
+    },
+  ];
+}
+
+export function companyFieldTemplate(): Array<Omit<FieldDef, "id">> {
+  return [
+    { label: t("template.industry"), type: "text" },
+    { label: t("template.website"), type: "url" },
+    { label: t("template.phone"), type: "phone" },
+    { label: t("template.address"), type: "text" },
+  ];
+}

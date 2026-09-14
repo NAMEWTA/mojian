@@ -11,6 +11,7 @@ import {
   sortNotes,
 } from "@/lib/notes/format";
 import { useNotesStore } from "@/lib/notes/store";
+import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 export function Sidebar({
@@ -24,6 +25,7 @@ export function Sidebar({
   onClose: () => void;
   onCreate: () => void;
 }) {
+  const { t, locale } = useI18n();
   const notes = useNotesStore((s) => s.notes);
   const selectedId = useNotesStore((s) => s.selectedId);
   const search = useNotesStore((s) => s.search);
@@ -61,8 +63,8 @@ export function Sidebar({
     <div className="flex h-full min-h-0 flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-2 px-4 pt-4 pb-3">
         <div className="min-w-0 flex-1">
-          <h1 className="font-serif text-xl font-semibold tracking-tight">笔记</h1>
-          <p className="text-xs text-muted-foreground">安静地写</p>
+          <h1 className="font-serif text-xl font-semibold tracking-tight">{t("notes.title")}</h1>
+          <p className="text-xs text-muted-foreground">{t("notes.tagline")}</p>
         </div>
         <Button
           type="button"
@@ -70,7 +72,7 @@ export function Sidebar({
           size="icon-sm"
           className="md:hidden"
           onClick={onClose}
-          aria-label="关闭目录"
+          aria-label={t("nav.closeTree")}
         >
           <X />
         </Button>
@@ -85,8 +87,8 @@ export function Sidebar({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             onKeyDown={onSearchKeyDown}
-            placeholder="搜索笔记"
-            aria-label="搜索笔记"
+            placeholder={t("notes.search")}
+            aria-label={t("notes.searchAria")}
             autoComplete="off"
             className="h-11 rounded-xl bg-card pl-9 pr-9"
           />
@@ -94,33 +96,29 @@ export function Sidebar({
             <button
               type="button"
               className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
-              aria-label="清除搜索"
+              aria-label={t("notes.clearSearch")}
               onClick={() => setSearch("")}
             >
               <X className="size-4" />
             </button>
           ) : null}
         </div>
-        <Button
-          type="button"
-          className="mt-3 h-11 w-full rounded-xl"
-          onClick={onCreate}
-        >
+        <Button type="button" className="mt-3 h-11 w-full rounded-xl" onClick={onCreate}>
           <Plus />
-          新建笔记
+          {t("notes.new")}
         </Button>
       </div>
 
       <div
         role="listbox"
-        aria-label="笔记列表"
+        aria-label={t("notes.listAria")}
         className="notes-scroll mt-3 min-h-0 flex-1 overflow-y-auto px-2 pb-4"
       >
         {visible.length === 0 ? (
           <div className="px-3 py-10 text-center">
             <Pencil className="mx-auto size-5 text-muted-foreground" />
             <p className="mt-3 text-sm text-muted-foreground">
-              {notes.length === 0 ? "还没有笔记" : "没有匹配的笔记"}
+              {notes.length === 0 ? t("notes.empty") : t("notes.noMatch")}
             </p>
           </div>
         ) : (
@@ -154,7 +152,7 @@ export function Sidebar({
                     suppressHydrationWarning
                     className="shrink-0 font-sans text-xs tabular-nums text-muted-foreground"
                   >
-                    {formatLastEdited(note.updatedAt, now)}
+                    {formatLastEdited(note.updatedAt, now, locale)}
                   </time>
                 </div>
                 {excerpt ? (
@@ -162,7 +160,7 @@ export function Sidebar({
                     <HighlightText text={excerpt} query={search} />
                   </p>
                 ) : (
-                  <p className="mt-1 text-xs text-muted-foreground">空白笔记</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t("notes.blank")}</p>
                 )}
               </button>
             );

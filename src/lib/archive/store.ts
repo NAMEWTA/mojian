@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { getLocale, t } from "@/i18n";
 import { noteTitle } from "@/lib/notes/format";
-import { BOOK_NOTES, SEED_BOOKS, SEED_DOCS, SEED_ENTRIES } from "./seed";
-import type { ArchiveNode, Book, Entry, FieldDef, FocusKind } from "./types";
+import { BOOK_DEMO, DOC_START, ENTRY_DEMO, SEED_BOOKS, SEED_DOCS, SEED_ENTRIES } from "./seed";
+import type { ArchiveNode, Book, BookGlyph, Entry, FieldDef, FocusKind } from "./types";
 
 function nid(): string {
   return crypto.randomUUID();
@@ -31,9 +32,9 @@ export function migrateNode(raw: Partial<ArchiveNode> & { content?: string }): A
     name: raw.name?.trim()
       ? raw.name
       : kind === "folder"
-        ? "未命名文件夹"
-        : fromContent === "无标题"
-          ? "未命名文档"
+        ? t("defaults.untitledFolder")
+        : fromContent === t("defaults.untitled")
+          ? t("defaults.untitledDoc")
           : fromContent,
     content,
     createdAt: raw.createdAt ?? touch(),
@@ -56,7 +57,7 @@ type ArchiveState = {
   selectNode: (id: string) => void;
   setSearch: (search: string) => void;
   setPreview: (preview: boolean) => void;
-  createBook: (name: string, fields?: FieldDef[]) => string;
+  createBook: (name: string, fields?: FieldDef[], glyph?: BookGlyph) => string;
   renameBook: (id: string, name: string) => void;
   deleteBook: (id: string) => void;
   setFields: (bookId: string, fields: FieldDef[]) => void;
@@ -95,14 +96,14 @@ function descendantIds(docs: ArchiveNode[], rootId: string): Set<string> {
 }
 
 export function entryTitle(entry: Entry): string {
-  return entry.title.trim() || "未命名";
+  return entry.title.trim() || t("entry.untitled");
 }
 
 export function nodeTitle(node: ArchiveNode): string {
-  if (node.kind === "folder") return node.name.trim() || "未命名文件夹";
+  if (node.kind === "folder") return node.name.trim() || t("defaults.untitledFolder");
   if (node.name.trim()) return node.name.trim();
   const fromContent = noteTitle(node.content);
-  return fromContent === "无标题" ? "未命名文档" : fromContent;
+  return fromContent === t("defaults.untitled") ? t("defaults.untitledDoc") : fromContent;
 }
 
 export function docTitle(node: ArchiveNode): string {
@@ -118,7 +119,7 @@ export function childrenOf(
     .filter((node) => node.entryId === entryId && node.parentId === parentId)
     .sort((a, b) => {
       if (a.kind !== b.kind) return a.kind === "folder" ? -1 : 1;
-      return nodeTitle(a).localeCompare(nodeTitle(b), "zh");
+      return nodeTitle(a).localeCompare(nodeTitle(b), getLocale() === "en" ? "en" : "zh");
     });
 }
 
@@ -161,11 +162,11 @@ export const useArchiveStore = create<ArchiveState>()(
       books: SEED_BOOKS,
       entries: SEED_ENTRIES,
       docs: SEED_DOCS,
-      selectedBookId: BOOK_NOTES,
-      selectedEntryId: null,
-      selectedDocId: null,
+      selectedBookId: BOOK_DEMO,
+      selectedEntryId: ENTRY_DEMO,
+      selectedDocId: DOC_START,
       search: "",
-      preview: false,
+      preview: true,
 
       selectBook: (id) => {
         set({
@@ -206,13 +207,14 @@ export const useArchiveStore = create<ArchiveState>()(
       setSearch: (search) => set({ search }),
       setPreview: (preview) => set({ preview }),
 
-      createBook: (name, fields = []) => {
+      createBook: (name, fields = [], glyph = "library") => {
         const id = nid();
         const now = touch();
         const book: Book = {
           id,
-          name: name.trim() || "未命名簿",
+          name: name.trim() || t("defaults.untitledBook"),
           fields: fields.map((field) => ({ ...field, id: field.id || nid() })),
+          glyph,
           createdAt: now,
           updatedAt: now,
         };
@@ -334,7 +336,7 @@ export const useArchiveStore = create<ArchiveState>()(
           entryId,
           parentId: resolveParent(get().docs, parentId),
           kind: "file",
-          name: "未命名文档",
+          name: t("defaults.untitledDoc"),
           content: "",
           createdAt: now,
           updatedAt: now,
@@ -361,7 +363,7 @@ export const useArchiveStore = create<ArchiveState>()(
           entryId,
           parentId: resolveParent(get().docs, parentId),
           kind: "folder",
-          name: "未命名文件夹",
+          name: t("defaults.untitledFolder"),
           content: "",
           createdAt: now,
           updatedAt: now,
@@ -418,7 +420,7 @@ export const useArchiveStore = create<ArchiveState>()(
     }),
     {
       name: "mojian-archive",
-      version: 3,
+      version: 4,
       storage:
         typeof window === "undefined"
           ? undefined
@@ -429,23 +431,29 @@ export const useArchiveStore = create<ArchiveState>()(
           docs?: unknown[];
           books?: Book[];
           entries?: Entry[];
+          selectedBookId?: string | null;
+          selectedEntryId?: string | null;
+          selectedDocId?: string | null;
+          preview?: boolean;
         };
         if (version < 2 && Array.isArray(state.docs)) {
           state.docs = state.docs.map((item) =>
             migrateNode(item as Partial<ArchiveNode>),
           );
         }
-        if (version < 3) {
+        if (version < 4) {
           const books = state.books ?? [];
-          if (!books.some((book) => book.id === BOOK_NOTES)) {
-            const noteBook = SEED_BOOKS.find((book) => book.id === BOOK_NOTES);
-            const noteEntries = SEED_ENTRIES.filter((entry) => entry.bookId === BOOK_NOTES);
-            const noteDocs = SEED_DOCS.filter((doc) =>
-              noteEntries.some((entry) => entry.id === doc.entryId),
-            );
-            if (noteBook) state.books = [noteBook, ...books];
-            state.entries = [...noteEntries, ...(state.entries ?? [])];
-            state.docs = [...noteDocs, ...((state.docs as ArchiveNode[] | undefined) ?? [])];
+          const oldDemo = new Set(["book-notes", "book-people", "book-company"]);
+          const onlyOldDemo =
+            books.length === 0 || books.every((book) => oldDemo.has(book.id));
+          if (onlyOldDemo) {
+            state.books = SEED_BOOKS;
+            state.entries = SEED_ENTRIES;
+            state.docs = SEED_DOCS;
+            state.selectedBookId = BOOK_DEMO;
+            state.selectedEntryId = ENTRY_DEMO;
+            state.selectedDocId = DOC_START;
+            state.preview = true;
           }
         }
         return state as ArchiveState;

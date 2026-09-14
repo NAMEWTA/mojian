@@ -1,311 +1,235 @@
 import type { ArchiveNode, Book, Entry } from "./types";
 
-const NOW = Date.parse("2026-09-12T03:00:00.000Z");
+const NOW = Date.parse("2026-09-14T06:00:00.000Z");
 
-export const BOOK_NOTES = "book-notes";
-export const BOOK_PEOPLE = "book-people";
-export const BOOK_COMPANY = "book-company";
+export const BOOK_DEMO = "book-demo";
+export const ENTRY_DEMO = "entry-demo";
+export const FOLDER_DEMO = "folder-demo";
+export const DOC_START = "doc-start";
 
 export const SEED_BOOKS: Book[] = [
   {
-    id: BOOK_NOTES,
-    name: "笔记簿",
-    createdAt: NOW - 1000 * 60 * 60 * 50,
-    updatedAt: NOW - 1000 * 60 * 8,
-    fields: [],
-  },
-  {
-    id: BOOK_PEOPLE,
-    name: "人脉簿",
-    createdAt: NOW - 1000 * 60 * 60 * 40,
-    updatedAt: NOW - 1000 * 60 * 20,
+    id: BOOK_DEMO,
+    name: "演示簿",
+    createdAt: NOW - 1000 * 60 * 30,
+    updatedAt: NOW - 1000 * 60 * 4,
+    glyph: "notes",
     fields: [
-      { id: "p-phone", label: "电话", type: "phone" },
-      { id: "p-email", label: "邮箱", type: "email" },
-      { id: "p-role", label: "身份", type: "text" },
+      { id: "d-role", label: "身份", type: "text" },
+      { id: "d-phone", label: "电话", type: "phone" },
       {
-        id: "p-company",
-        label: "所属企业",
-        type: "relation",
-        relationBookId: BOOK_COMPANY,
-      },
-      {
-        id: "p-how",
-        label: "认识途径",
+        id: "d-note",
+        label: "备注",
         type: "select",
-        options: ["朋友介绍", "工作往来", "活动偶遇", "旧识"],
+        options: ["仅作示范", "可以改", "可以删"],
       },
-    ],
-  },
-  {
-    id: BOOK_COMPANY,
-    name: "企业簿",
-    createdAt: NOW - 1000 * 60 * 60 * 40,
-    updatedAt: NOW - 1000 * 60 * 30,
-    fields: [
-      { id: "c-industry", label: "行业", type: "text" },
-      { id: "c-site", label: "官网", type: "url" },
-      { id: "c-phone", label: "电话", type: "phone" },
-      { id: "c-address", label: "地址", type: "text" },
     ],
   },
 ];
 
 export const SEED_ENTRIES: Entry[] = [
   {
-    id: "entry-welcome",
-    bookId: BOOK_NOTES,
-    title: "欢迎来到墨笺",
-    createdAt: NOW - 1000 * 60 * 8,
-    updatedAt: NOW - 1000 * 60 * 8,
-    values: {},
-  },
-  {
-    id: "entry-markdown",
-    bookId: BOOK_NOTES,
-    title: "Markdown 速记",
-    createdAt: NOW - 1000 * 60 * 60 * 26,
-    updatedAt: NOW - 1000 * 60 * 60 * 26,
-    values: {},
-  },
-  {
-    id: "entry-rain",
-    bookId: BOOK_NOTES,
-    title: "雨停之后",
-    createdAt: NOW - 1000 * 60 * 60 * 50,
-    updatedAt: NOW - 1000 * 60 * 60 * 50,
-    values: {},
-  },
-  {
-    id: "entry-chen",
-    bookId: BOOK_PEOPLE,
-    title: "陈晚晴",
-    createdAt: NOW - 1000 * 60 * 60 * 26,
-    updatedAt: NOW - 1000 * 60 * 18,
+    id: ENTRY_DEMO,
+    bookId: BOOK_DEMO,
+    title: "演示档案",
+    createdAt: NOW - 1000 * 60 * 20,
+    updatedAt: NOW - 1000 * 60 * 4,
     values: {
-      "p-phone": "138 0100 2288",
-      "p-email": "wanqing@chaguang.example",
-      "p-role": "茶席主理",
-      "p-company": "entry-chaguang",
-      "p-how": "朋友介绍",
-    },
-  },
-  {
-    id: "entry-zhou",
-    bookId: BOOK_PEOPLE,
-    title: "周屿",
-    createdAt: NOW - 1000 * 60 * 60 * 20,
-    updatedAt: NOW - 1000 * 60 * 50,
-    values: {
-      "p-phone": "186 2210 0941",
-      "p-email": "zhouyu@beichuang.example",
-      "p-role": "文学编辑",
-      "p-company": "entry-beichuang",
-      "p-how": "工作往来",
-    },
-  },
-  {
-    id: "entry-chaguang",
-    bookId: BOOK_COMPANY,
-    title: "晨光茶社",
-    createdAt: NOW - 1000 * 60 * 60 * 30,
-    updatedAt: NOW - 1000 * 60 * 40,
-    values: {
-      "c-industry": "茶事 / 空间",
-      "c-site": "https://chaguang.example",
-      "c-phone": "010 6588 1020",
-      "c-address": "东城区北新桥小街 12 号",
-    },
-  },
-  {
-    id: "entry-beichuang",
-    bookId: BOOK_COMPANY,
-    title: "北窗出版社",
-    createdAt: NOW - 1000 * 60 * 60 * 28,
-    updatedAt: NOW - 1000 * 60 * 80,
-    values: {
-      "c-industry": "出版",
-      "c-site": "https://beichuang.example",
-      "c-phone": "010 6400 3312",
-      "c-address": "西城区砖塔胡同 8 号",
+      "d-role": "第一次打开时的示例",
+      "d-phone": "",
+      "d-note": "仅作示范",
     },
   },
 ];
 
 export const SEED_DOCS: ArchiveNode[] = [
   {
-    id: "doc-welcome",
-    entryId: "entry-welcome",
+    id: DOC_START,
+    entryId: ENTRY_DEMO,
     parentId: null,
     kind: "file",
-    name: "正文",
+    name: "01 · 从这里开始",
+    createdAt: NOW - 1000 * 60 * 12,
+    updatedAt: NOW - 1000 * 60 * 4,
+    content: `# 从这里开始
+
+欢迎使用墨笺。第一次打开，只准备了这一本**演示簿**、一条**演示档案**、一个**演示文件夹**，以及这几篇说明。看完之后，整本簿都可以删掉，换成你自己的。
+
+墨笺不是一叠散落的笔记。左边是一棵完整的目录：
+
+**簿 → 档案 → 文件夹 / 文稿**
+
+| 你看到的 | 点它会怎样 |
+| --- | --- |
+| 深色**方块** | 一本簿。右侧编辑这本簿的字段 |
+| **圆形** | 一条档案。右侧填写属性，并看到它下面的文稿树 |
+| **琥珀色文件夹** | 一层目录。可以再放文件夹或文稿 |
+| **灰色纸张** | 一篇 Markdown 文稿。右侧撰写 |
+
+![左侧目录树：簿、档案、文件夹、文稿](/demo/tree.png)
+
+## 建议你这样走一遍
+
+1. 点左侧的 **演示簿**，看字段是怎么定的。
+2. 再点 **演示档案**，看档案属性和下面的文稿树。
+3. 打开 **演示文件夹**，按 02、03、04 的顺序读完。
+
+右侧这篇就是文稿。点顶栏眼睛图标可以在「编辑 / 预览」之间切换。现在是预览，方便对着图看。
+`,
+  },
+  {
+    id: FOLDER_DEMO,
+    entryId: ENTRY_DEMO,
+    parentId: null,
+    kind: "folder",
+    name: "演示文件夹",
+    content: "",
+    createdAt: NOW - 1000 * 60 * 11,
+    updatedAt: NOW - 1000 * 60 * 4,
+  },
+  {
+    id: "doc-book",
+    entryId: ENTRY_DEMO,
+    parentId: FOLDER_DEMO,
+    kind: "file",
+    name: "02 · 簿、档案、字段",
+    createdAt: NOW - 1000 * 60 * 10,
+    updatedAt: NOW - 1000 * 60 * 4,
+    content: `# 簿、档案、字段
+
+## 簿是分类
+
+人脉、企业、项目、读书……每一种分类就是一本**簿**。左下角 **新建簿**，也可以从「人脉 / 企业 / 笔记」模板开始。
+
+点簿的名字（不要点它旁边的加号），右侧会打开这本簿：
+
+![点开演示簿，编辑字段、查看档案列表](/demo/book.png)
+
+在这里可以：
+
+- 给整本簿**增加、删除、调整字段**（文本、电话、邮箱、链接、日期、选项、关联）
+- 看到这本簿里的所有档案
+- 点某一行，进入那条档案
+
+字段是簿的模板：你在这里加一个「电话」，这本簿里每一条档案都会带上电话。
+
+## 档案是一条记录
+
+档案像一个文件夹。它有名字、有字段值，里面再放文稿。
+
+点左侧 **演示档案**，右侧分成两块：**档案属性** 和 **文稿**。
+
+![演示档案：上面是属性，下面是文稿树](/demo/entry.png)
+
+- 改标题、改字段，都只影响这一条
+- 下面的文稿树和左侧目录是同一棵，只是缩到了这条档案里
+- 顶栏垃圾桶会删除整条档案（连同里面的文件）
+
+演示档案里的「身份 / 电话 / 备注」都可以改着玩。改完不会弄坏别的东西。
+`,
+  },
+  {
+    id: "doc-files",
+    entryId: ENTRY_DEMO,
+    parentId: FOLDER_DEMO,
+    kind: "file",
+    name: "03 · 文件夹与文稿",
+    createdAt: NOW - 1000 * 60 * 9,
+    updatedAt: NOW - 1000 * 60 * 4,
+    content: `# 文件夹与文稿
+
+档案里面可以再分层，跟电脑里的文件夹一样。
+
+## 文稿树
+
+在档案页点 **文件夹** 或 **文档**，会在当前层新建。左侧树里，把鼠标移到一行上：
+
+- **+** 新建文档
+- 文件夹图标 新建子文件夹
+- **×** 删除（文件夹会连同里面的内容一起删，会先请你确认）
+
+点开一个文件夹，右侧就是这一层：
+
+![演示文件夹](/demo/folder.png)
+
+## 写文稿
+
+点一篇文稿进入编辑。第一行会显示为标题；正文用 Markdown。
+
+![文稿编辑](/demo/editor.png)
+
+常用写法：
+
+\`\`\`md
+# 标题
+**加粗**  *斜体*  \`代码\`
+
+- 列表
+- [ ] 待办
+
+> 引用
+\`\`\`
+
+顶栏眼睛：预览渲染后的样子。再点一次回到编辑。
+
+![文稿预览](/demo/preview.png)
+
+Tab 会插入两个空格。内容会自动保存。
+`,
+  },
+  {
+    id: "doc-more",
+    entryId: ENTRY_DEMO,
+    parentId: FOLDER_DEMO,
+    kind: "file",
+    name: "04 · 图片、语言、备份",
     createdAt: NOW - 1000 * 60 * 8,
-    updatedAt: NOW - 1000 * 60 * 8,
-    content: `# 欢迎来到墨笺
+    updatedAt: NOW - 1000 * 60 * 4,
+    content: `# 图片、语言、备份
 
-墨笺以档案为中心。左侧是完整目录树：簿、档案、文件夹和文稿。Markdown 只是档案里的一种写法。
+## 把图片放进文稿
 
-## 目录怎么用
+在编辑里 **粘贴**、**拖入** PNG / JPG，或点顶栏的图片按钮。
 
-- 点簿：看这本簿的字段和条目
-- 点档案：看这条档案的属性
-- 点文稿：在右侧撰写
+图片会复制到数据目录下的 \`assets/\`，文件名是当天日期加编号，例如：
 
-数据可以绑到本机文件夹，或导出备份。电脑端（Windows / Mac）会把同一份档案写到你指定的目录。
-`,
-  },
-  {
-    id: "doc-markdown",
-    entryId: "entry-markdown",
-    parentId: null,
-    kind: "file",
-    name: "速记",
-    createdAt: NOW - 1000 * 60 * 60 * 26,
-    updatedAt: NOW - 1000 * 60 * 60 * 26,
-    content: `# Markdown 速记
+\`assets/2026-09-14-8f3a….png\`
 
-用轻量标记把结构写清楚，预览开关随时可开。
+文稿里写成相对路径：
 
-## 强调
+\`\`\`md
+![](assets/2026-09-14-8f3a….png)
+\`\`\`
 
-**加粗**、*斜体*，以及 \`行内代码\`。
+不要把原图路径写进去——墨笺用的是复制后的那一份。
 
-## 列表
+## 语言
 
-- 晨间三件事
-- 待读清单
+顶栏 **中 / EN** 切换界面语言。你自己写的簿名、档案、正文不会被翻译。
 
-1. 起草
-2. 修改
-3. 放下
+## 数据放在哪
 
-## 任务
+电脑端默认写在 **Documents/mojian**：
 
-- [x] 打开墨笺
-- [ ] 写下今天的第一句
+- \`mojian.json\` 全部档案
+- \`assets/\` 文稿里的图片
 
-## 引用
+点顶栏硬盘图标打开「数据与备份」：
 
-> 写，是为了看清自己在想什么。
-`,
-  },
-  {
-    id: "doc-rain",
-    entryId: "entry-rain",
-    parentId: null,
-    kind: "file",
-    name: "正文",
-    createdAt: NOW - 1000 * 60 * 60 * 50,
-    updatedAt: NOW - 1000 * 60 * 60 * 50,
-    content: `# 雨停之后
+![数据与备份](/demo/backup.png)
 
-巷口的槐树还在滴水。伞收在门边，窗开了一线。桌上只留一盏灯，和一句还没写完的话。
+- 可以改绑到 iCloud、OneDrive、坚果云里的文件夹，换电脑后再选同一位置
+- **导出备份 / 导入备份** 适合拷到 U 盘
 
-不必写得漂亮。先写下来，让它在纸上待一会儿。
+## 新建你自己的簿
 
-有些句子过夜之后会自己站稳，有些则在天亮时悄悄离开。两种都好。
-`,
-  },
-  {
-    id: "folder-chen-wanglai",
-    entryId: "entry-chen",
-    parentId: null,
-    kind: "folder",
-    name: "往来",
-    content: "",
-    createdAt: NOW - 1000 * 60 * 60 * 25,
-    updatedAt: NOW - 1000 * 60 * 18,
-  },
-  {
-    id: "doc-chen-meet",
-    entryId: "entry-chen",
-    parentId: "folder-chen-wanglai",
-    kind: "file",
-    name: "初识",
-    createdAt: NOW - 1000 * 60 * 60 * 24,
-    updatedAt: NOW - 1000 * 60 * 18,
-    content: `# 初识
+左下角 **新建簿**。可以从空白、笔记、人脉、企业模板开始，再改字段。
 
-在北新桥那间小茶室见面。她把水烧到刚好，不说话，先把杯子温热。
+![新建一本簿](/demo/new-book.png)
 
-记下两件事：
+## 看完就可以删演示
 
-- 不喜欢被称作「老板」，称「晚晴」即可
-- 下次带一本北窗出的诗集，她说想给空间做一份季节书单
-`,
-  },
-  {
-    id: "doc-chen-collab",
-    entryId: "entry-chen",
-    parentId: "folder-chen-wanglai",
-    kind: "file",
-    name: "合作备忘",
-    createdAt: NOW - 1000 * 60 * 40,
-    updatedAt: NOW - 1000 * 60 * 18,
-    content: `# 合作备忘
-
-想在茶社做一次「纸与茶」小集：墨笺的读者坐下来写一段，她配一款岩茶。
-
-待确认：
-
-1. 周日下午场，大约十二人
-2. 纸、笔由我准备
-3. 她负责席位和茶
-`,
-  },
-  {
-    id: "doc-zhou",
-    entryId: "entry-zhou",
-    parentId: null,
-    kind: "file",
-    name: "约稿",
-    createdAt: NOW - 1000 * 60 * 60 * 10,
-    updatedAt: NOW - 1000 * 60 * 50,
-    content: `# 约稿
-
-周屿约一篇关于「慢写」的短文，两千字左右，给北窗的月报。
-
-截稿大概在月底。她说不要鸡汤，要具体的纸面习惯。
-`,
-  },
-  {
-    id: "folder-chaguang",
-    entryId: "entry-chaguang",
-    parentId: null,
-    kind: "folder",
-    name: "空间",
-    content: "",
-    createdAt: NOW - 1000 * 60 * 60 * 14,
-    updatedAt: NOW - 1000 * 60 * 40,
-  },
-  {
-    id: "doc-chaguang",
-    entryId: "entry-chaguang",
-    parentId: "folder-chaguang",
-    kind: "file",
-    name: "空间印象",
-    createdAt: NOW - 1000 * 60 * 60 * 12,
-    updatedAt: NOW - 1000 * 60 * 40,
-    content: `# 空间印象
-
-一进门是槐木长桌。午后光线从北窗进来，很适合坐下来写。
-
-周末有时满座，约人最好提前一天。
-`,
-  },
-  {
-    id: "doc-beichuang",
-    entryId: "entry-beichuang",
-    parentId: null,
-    kind: "file",
-    name: "往来",
-    createdAt: NOW - 1000 * 60 * 60 * 8,
-    updatedAt: NOW - 1000 * 60 * 80,
-    content: `# 往来
-
-北窗的月报走纸质，发行量不大，编辑部的人却很认真。
-
-寄样书地址用企业簿里的砖塔胡同。
+这篇和这本「演示簿」只是路标。点簿名右侧的垃圾桶，整本演示都会消失。然后从你真正要记的人、项目或笔记开始即可。
 `,
   },
 ];
