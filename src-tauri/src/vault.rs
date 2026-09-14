@@ -15,7 +15,10 @@ const ASSETS_DIR: &str = "assets";
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 struct Meta {
     data_dir: Option<String>,
+    #[serde(default)]
+    backup_dir: Option<String>,
 }
+
 
 fn meta_path(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = app
@@ -190,6 +193,140 @@ pub fn read_asset(app: AppHandle, name: String) -> Result<Option<String>, String
     Ok(Some(format!("data:{};base64,{b64}", mime_for(&name))))
 }
 
+fn backup_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    if let Some(dir) = read_meta(app).backup_dir.filter(|s| !s.is_empty()) {
+        return Ok(PathBuf::from(dir));
+    }
+    Ok(data_dir(app)?.join("backups"))
+}
+
+fn is_backup_name(name: &str) -> bool {
+    let base = Path::new(name)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("");
+    if base != name {
+        return false;
+    }
+    let Some(stem) = base.strip_suffix(".json") else {
+        return false;
+    };
+    let Some(rest) = stem.strip_prefix("mojian-backup-") else {
+        return false;
+    };
+    rest.len() >= 17 && rest.chars().all(|c| c.is_ascii_digit() || c == '-')
+}
+
+#[derive(Debug, Serialize)]
+pub struct BackupFileInfo {
+    pub name: String,
+    pub size: u64,
+    pub mtime: i64,
+}
+
+fn backup_info(path: &Path) -> Result<BackupFileInfo, String> {
+    let meta = fs::metadata(path).map_err(|e| e.to_string())?;
+    let mtime = meta
+        .modified()
+        .ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0);
+    Ok(BackupFileInfo {
+        name: path
+            .file_name()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_default(),
+        size: meta.len(),
+        mtime,
+    })
+}
+
+fn backup_path(app: &AppHandle, name: &str) -> Result<PathBuf, String> {
+    if !is_backup_name(name) {
+        return Err("invalid backup name".into());
+    }
+    let dir = backup_dir(app)?;
+    let path = dir.join(name);
+    if path.parent() != Some(dir.as_path()) {
+        return Err("invalid backup name".into());
+    }
+    Ok(path)
+}
+
+#[tauri::command]
+pub fn get_backup_dir(app: AppHandle) -> Result<String, String> {
+    ensure_default_dir(&app)?;
+    let dir = backup_dir(&app)?;
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
+pub fn pick_backup_dir(app: AppHandle) -> Result<Option<String>, String> {
+    let picked = app
+        .dialog()
+        .file()
+        .set_title("Mojian backup folder")
+        .blocking_pick_folder();
+    let Some(folder) = picked else {
+        return Ok(None);
+    };
+    let dir = folder.to_string();
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let mut meta = read_meta(&app);
+    meta.backup_dir = Some(dir.clone());
+    write_meta(&app, &meta)?;
+    Ok(Some(dir))
+}
+
+#[tauri::command]
+pub fn write_backup(app: AppHandle, name: String, json: String) -> Result<BackupFileInfo, String> {
+    ensure_default_dir(&app)?;
+    let path = backup_path(&app, &name)?;
+    atomic_write(&path, &json)?;
+    backup_info(&path)
+}
+
+#[tauri::command]
+pub fn list_backups(app: AppHandle) -> Result<Vec<BackupFileInfo>, String> {
+    ensure_default_dir(&app)?;
+    let dir = backup_dir(&app)?;
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let mut rows = Vec::new();
+    let entries = fs::read_dir(&dir).map_err(|e| e.to_string())?;
+    for entry in entries {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let path = entry.path();
+        let Some(name) = path.file_name().and_then(|s| s.to_str()) else {
+            continue;
+        };
+        if !is_backup_name(name) {
+            continue;
+        }
+        if let Ok(info) = backup_info(&path) {
+            rows.push(info);
+        }
+    }
+    rows.sort_by(|a, b| b.mtime.cmp(&a.mtime).then_with(|| b.name.cmp(&a.name)));
+    Ok(rows)
+}
+
+#[tauri::command]
+pub fn read_backup(app: AppHandle, name: String) -> Result<String, String> {
+    let path = backup_path(&app, &name)?;
+    fs::read_to_string(path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn delete_backup(app: AppHandle, name: String) -> Result<(), String> {
+    let path = backup_path(&app, &name)?;
+    if path.exists() {
+        fs::remove_file(path).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -198,10 +335,17 @@ mod tests {
     fn meta_roundtrip() {
         let meta = Meta {
             data_dir: Some("/tmp/mojian".into()),
+            backup_dir: Some("/tmp/mojian-backups".into()),
         };
         let encoded = serde_json::to_string(&meta).unwrap();
         let decoded: Meta = serde_json::from_str(&encoded).unwrap();
         assert_eq!(meta, decoded);
+    }
+
+    #[test]
+    fn old_meta_without_backup_dir() {
+        let decoded: Meta = serde_json::from_str(r#"{"data_dir":"/tmp/mojian"}"#).unwrap();
+        assert_eq!(decoded.backup_dir, None);
     }
 
     #[test]
@@ -214,8 +358,20 @@ mod tests {
 
     #[test]
     fn asset_name_rejects_traversal() {
-        assert!(sanitize_asset_name("../x.png").is_err() || sanitize_asset_name("../x.png") == Ok("x.png".into()));
+        assert!(
+            sanitize_asset_name("../x.png").is_err()
+                || sanitize_asset_name("../x.png") == Ok("x.png".into())
+        );
         assert!(sanitize_asset_name("2026-09-14-abc.png").is_ok());
+    }
+
+    #[test]
+    fn backup_name_accepts_stamp_and_rejects_paths() {
+        assert!(is_backup_name("mojian-backup-2026-09-14-142533.json"));
+        assert!(is_backup_name("mojian-backup-2026-09-14-142533-2.json"));
+        assert!(!is_backup_name("../mojian-backup-2026-09-14-142533.json"));
+        assert!(!is_backup_name("mojian.json"));
+        assert!(!is_backup_name("notes.txt"));
     }
 }
 

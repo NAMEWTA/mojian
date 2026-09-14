@@ -1,14 +1,19 @@
 import { useState } from "react";
+import { Shuffle } from "lucide-react";
 import { FieldListEditor } from "@/components/archive/field-list-editor";
+import { KindIcon } from "@/components/archive/kind-icon";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useArchiveStore } from "@/lib/archive/store";
 import {
+  BOOK_GLYPHS,
   blankField,
   companyFieldTemplate,
+  glyphForBook,
   peopleFieldTemplate,
+  pickUnusedGlyph,
   type BookGlyph,
   type FieldDef,
 } from "@/lib/archive/types";
@@ -18,13 +23,6 @@ import { cn } from "@/lib/utils";
 function fromTemplate(rows: Array<Omit<FieldDef, "id">>): FieldDef[] {
   return rows.map((row) => blankField(row));
 }
-
-const TEMPLATE_GLYPH: Record<"blank" | "notes" | "people" | "company", BookGlyph> = {
-  blank: "library",
-  notes: "notes",
-  people: "people",
-  company: "company",
-};
 
 export function NewBookDialog({
   open,
@@ -39,32 +37,42 @@ export function NewBookDialog({
   const [name, setName] = useState("");
   const [fields, setFields] = useState<FieldDef[]>([]);
   const [template, setTemplate] = useState<"blank" | "notes" | "people" | "company">("blank");
+  const [glyph, setGlyph] = useState<BookGlyph | null>(null);
 
   function reset() {
     setName("");
     setFields([]);
     setTemplate("blank");
+    setGlyph(null);
   }
 
   function applyTemplate(next: "blank" | "notes" | "people" | "company") {
     setTemplate(next);
-    if (next === "blank") setFields([]);
+    if (next === "blank") {
+      setFields([]);
+      setGlyph(null);
+    }
     if (next === "notes") {
       setName((prev) => prev || t("newBook.notesName"));
       setFields([]);
+      setGlyph("notes");
     }
     if (next === "people") {
       setName((prev) => prev || t("newBook.peopleName"));
       setFields(fromTemplate(peopleFieldTemplate()));
+      setGlyph("people");
     }
     if (next === "company") {
       setName((prev) => prev || t("newBook.companyName"));
       setFields(fromTemplate(companyFieldTemplate()));
+      setGlyph("company");
     }
   }
 
   function submit() {
-    createBook(name, fields, TEMPLATE_GLYPH[template]);
+    const nextGlyph =
+      glyph ?? pickUnusedGlyph(books.map((book) => glyphForBook(book)));
+    createBook(name, fields, nextGlyph);
     reset();
     onClose();
   }
@@ -117,6 +125,38 @@ export function NewBookDialog({
                 )}
               >
                 {t(key)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <p className="text-xs font-medium text-muted-foreground">{t("newBook.icon")}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t("newBook.iconHint")}</p>
+          <div className="book-glyph-grid mt-2">
+            <button
+              type="button"
+              className="book-glyph-cell"
+              data-active={glyph === null}
+              onClick={() => setGlyph(null)}
+              aria-label={t("newBook.iconAuto")}
+              title={t("newBook.iconAuto")}
+            >
+              <span className="kind-icon kind-icon-book book-glyph-auto">
+                <Shuffle />
+              </span>
+            </button>
+            {BOOK_GLYPHS.map((id) => (
+              <button
+                key={id}
+                type="button"
+                className="book-glyph-cell"
+                data-active={glyph === id}
+                onClick={() => setGlyph(id)}
+                aria-label={id}
+                title={id}
+              >
+                <KindIcon kind="book" glyph={id} />
               </button>
             ))}
           </div>

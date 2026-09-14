@@ -4,6 +4,7 @@ import { DataSettings } from "@/components/data-settings";
 import { InkMark } from "@/components/notes/ink-mark";
 import { Button } from "@/components/ui/button";
 import { useArchiveStore } from "@/lib/archive/store";
+import { startBackupScheduler } from "@/lib/backup-runner";
 import { bindVaultSync, restoreDirectory } from "@/lib/vault";
 import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
@@ -13,11 +14,20 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [dataOpen, setDataOpen] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+    let stopBackup = () => {};
+    const unsub = bindVaultSync();
     void (async () => {
       await Promise.resolve(useArchiveStore.persist.rehydrate());
       await restoreDirectory();
+      if (cancelled) return;
+      stopBackup = startBackupScheduler();
     })();
-    return bindVaultSync();
+    return () => {
+      cancelled = true;
+      unsub();
+      stopBackup();
+    };
   }, []);
 
   return (

@@ -32,3 +32,34 @@ export async function nativeWriteAsset(name: string, data: string): Promise<stri
 export async function nativeReadAsset(name: string): Promise<string | null> {
   return invoke<string | null>("read_asset", { name });
 }
+
+export type NativeBackupInfo = {
+  name: string;
+  size: number;
+  mtime: number;
+};
+
+export async function nativeGetBackupDir(): Promise<string> {
+  return invoke<string>("get_backup_dir");
+}
+
+export async function nativePickBackupDir(): Promise<string | null> {
+  return invoke<string | null>("pick_backup_dir");
+}
+
+export async function nativeWriteBackup(name: string, json: string): Promise<NativeBackupInfo> {
+  return invoke<NativeBackupInfo>("write_backup", { name, json });
+}
+
+export async function nativeListBackups(): Promise<NativeBackupInfo[]> {
+  return invoke<NativeBackupInfo[]>("list_backups");
+}
+
+export async function nativeReadBackup(name: string): Promise<string> {
+  return invoke<string>("read_backup", { name });
+}
+
+export async function nativeDeleteBackup(name: string): Promise<void> {
+  await invoke<void>("delete_backup", { name });
+}
+

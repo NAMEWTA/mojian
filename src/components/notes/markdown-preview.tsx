@@ -25,24 +25,52 @@ function AssetImage({ src, alt }: { src?: string; alt: string }) {
   return <img src={url} alt={alt} crossOrigin="anonymous" />;
 }
 
-const components: Components = {
-  a: ({ href, children }) => (
-    <a href={href} target="_blank" rel="noreferrer noopener">
-      {children}
-    </a>
-  ),
-  img: ({ src, alt }) => <AssetImage src={src} alt={alt ?? ""} />,
-};
+function makeComponents(onTaskToggle?: (index: number) => void): Components {
+  let task = 0;
+  return {
+    a: ({ href, children }) => (
+      <a href={href} target="_blank" rel="noreferrer noopener">
+        {children}
+      </a>
+    ),
+    img: ({ src, alt }) => <AssetImage src={src} alt={alt ?? ""} />,
+    input: ({ type, checked, ...props }) => {
+      if (type !== "checkbox") return <input type={type} checked={checked} {...props} />;
+      const index = task++;
+      return (
+        <input
+          type="checkbox"
+          checked={Boolean(checked)}
+          disabled={!onTaskToggle}
+          onChange={(event) => {
+            event.stopPropagation();
+            onTaskToggle?.(index);
+          }}
+          onClick={(event) => event.stopPropagation()}
+        />
+      );
+    },
+  };
+}
 
-export function MarkdownPreview({ content }: { content: string }) {
+export function MarkdownPreview({
+  content,
+  compact = false,
+  onTaskToggle,
+}: {
+  content: string;
+  compact?: boolean;
+  onTaskToggle?: (index: number) => void;
+}) {
   const { t } = useI18n();
   if (!content.trim()) {
+    if (compact) return null;
     return <p className="font-serif text-lg text-muted-foreground">{t("doc.emptyPreview")}</p>;
   }
 
   return (
     <div className="md-preview">
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={makeComponents(onTaskToggle)}>
         {content}
       </ReactMarkdown>
     </div>

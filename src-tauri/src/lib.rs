@@ -11,6 +11,12 @@ pub fn run() {
             vault::write_data,
             vault::write_asset,
             vault::read_asset,
+            vault::get_backup_dir,
+            vault::pick_backup_dir,
+            vault::write_backup,
+            vault::list_backups,
+            vault::read_backup,
+            vault::delete_backup,
         ])
         .setup(|app| {
             vault::ensure_default_dir(app.handle()).map_err(std::io::Error::other)?;

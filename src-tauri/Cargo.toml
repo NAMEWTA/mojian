@@ -1,6 +1,6 @@
 [package]
 name = "mojian"
-version = "0.0.2"
+version = "0.0.3"
 description = "Mojian: archive-first desktop notes"
 authors = ["NAMEWTA"]
 edition = "2021"

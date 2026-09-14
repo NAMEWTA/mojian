@@ -1,4 +1,5 @@
 import { t } from "@/i18n";
+import { formatBackupFilename } from "@/lib/backup";
 import {
   isDesktopApp,
   nativeGetDataDir,
@@ -144,6 +145,10 @@ async function ensurePermission(handle: FileSystemDirectoryHandle): Promise<bool
 
 let boundHandle: FileSystemDirectoryHandle | null = null;
 
+export function getBoundDirectoryHandle(): FileSystemDirectoryHandle | null {
+  return boundHandle;
+}
+
 export async function writeAssetToBoundFolder(name: string, blob: Blob): Promise<void> {
   if (!boundHandle) return;
   const dir = await boundHandle.getDirectoryHandle("assets", { create: true });
@@ -263,10 +268,9 @@ export function downloadBackup() {
     type: "application/json",
   });
   const url = URL.createObjectURL(blob);
-  const stamp = new Date().toISOString().slice(0, 10);
   const link = document.createElement("a");
   link.href = url;
-  link.download = t("data.backupFile", { date: stamp });
+  link.download = formatBackupFilename();
   link.click();
   URL.revokeObjectURL(url);
 }

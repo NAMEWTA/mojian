@@ -12,7 +12,34 @@ export const FIELD_TYPES = [
 
 export type FieldType = (typeof FIELD_TYPES)[number];
 
-export type BookGlyph = "people" | "company" | "notes" | "library";
+export const BOOK_GLYPHS = [
+  "library",
+  "notes",
+  "people",
+  "company",
+  "star",
+  "heart",
+  "home",
+  "briefcase",
+  "globe",
+  "map",
+  "calendar",
+  "flag",
+  "music",
+  "camera",
+  "palette",
+  "code",
+  "leaf",
+  "flame",
+  "sparkles",
+  "compass",
+  "gift",
+  "plane",
+  "lightbulb",
+  "bookmark",
+] as const;
+
+export type BookGlyph = (typeof BOOK_GLYPHS)[number];
 
 export type FieldDef = {
   id: string;
@@ -53,6 +80,8 @@ export type ArchiveNode = {
 
 export type FocusKind = "book" | "entry" | "folder" | "file";
 
+export type DocLayout = "live" | "preview";
+
 export function blankField(partial: Partial<FieldDef> = {}): FieldDef {
   return {
     id: crypto.randomUUID(),
@@ -62,12 +91,23 @@ export function blankField(partial: Partial<FieldDef> = {}): FieldDef {
   };
 }
 
+export function isBookGlyph(value: unknown): value is BookGlyph {
+  return typeof value === "string" && (BOOK_GLYPHS as readonly string[]).includes(value);
+}
+
 export function glyphForBook(book: Pick<Book, "id"> & { glyph?: BookGlyph }): BookGlyph {
-  if (book.glyph) return book.glyph;
+  if (isBookGlyph(book.glyph)) return book.glyph;
   if (book.id === "book-demo" || book.id === "book-notes") return "notes";
   if (book.id === "book-people") return "people";
   if (book.id === "book-company") return "company";
   return "library";
+}
+
+export function pickUnusedGlyph(used: Array<BookGlyph | undefined | null>): BookGlyph {
+  const taken = new Set(used.filter((glyph): glyph is BookGlyph => isBookGlyph(glyph)));
+  const free = BOOK_GLYPHS.filter((glyph) => !taken.has(glyph));
+  const pool = free.length ? free : BOOK_GLYPHS;
+  return pool[Math.floor(Math.random() * pool.length)] ?? "library";
 }
 
 export function peopleFieldTemplate(): Array<Omit<FieldDef, "id">> {

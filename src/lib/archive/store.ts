@@ -3,7 +3,8 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { getLocale, t } from "@/i18n";
 import { noteTitle } from "@/lib/notes/format";
 import { BOOK_DEMO, DOC_START, ENTRY_DEMO, SEED_BOOKS, SEED_DOCS, SEED_ENTRIES } from "./seed";
-import type { ArchiveNode, Book, BookGlyph, Entry, FieldDef, FocusKind } from "./types";
+import { glyphForBook, pickUnusedGlyph } from "./types";
+import type { ArchiveNode, Book, BookGlyph, DocLayout, Entry, FieldDef, FocusKind } from "./types";
 
 function nid(): string {
   return crypto.randomUUID();
@@ -50,13 +51,13 @@ type ArchiveState = {
   selectedEntryId: string | null;
   selectedDocId: string | null;
   search: string;
-  preview: boolean;
+  docLayout: DocLayout;
   selectBook: (id: string | null) => void;
   selectEntry: (id: string | null) => void;
   selectDoc: (id: string | null) => void;
   selectNode: (id: string) => void;
   setSearch: (search: string) => void;
-  setPreview: (preview: boolean) => void;
+  setDocLayout: (layout: DocLayout) => void;
   createBook: (name: string, fields?: FieldDef[], glyph?: BookGlyph) => string;
   renameBook: (id: string, name: string) => void;
   deleteBook: (id: string) => void;
@@ -156,6 +157,17 @@ export function entryMatches(
   );
 }
 
+type PersistedArchive = {
+  docs?: unknown[];
+  books?: Book[];
+  entries?: Entry[];
+  selectedBookId?: string | null;
+  selectedEntryId?: string | null;
+  selectedDocId?: string | null;
+  preview?: boolean;
+  docLayout?: DocLayout;
+};
+
 export const useArchiveStore = create<ArchiveState>()(
   persist(
     (set, get) => ({
@@ -166,7 +178,7 @@ export const useArchiveStore = create<ArchiveState>()(
       selectedEntryId: ENTRY_DEMO,
       selectedDocId: DOC_START,
       search: "",
-      preview: true,
+      docLayout: "live",
 
       selectBook: (id) => {
         set({
@@ -186,7 +198,7 @@ export const useArchiveStore = create<ArchiveState>()(
         });
       },
 
-      selectDoc: (id) => set({ selectedDocId: id, preview: false }),
+      selectDoc: (id) => set({ selectedDocId: id }),
 
       selectNode: (id) => {
         const { docs, entries } = get();
@@ -200,21 +212,20 @@ export const useArchiveStore = create<ArchiveState>()(
           selectedDocId: id,
           selectedEntryId: node.entryId,
           selectedBookId: entry?.bookId ?? get().selectedBookId,
-          preview: false,
         });
       },
 
       setSearch: (search) => set({ search }),
-      setPreview: (preview) => set({ preview }),
+      setDocLayout: (docLayout) => set({ docLayout }),
 
-      createBook: (name, fields = [], glyph = "library") => {
+      createBook: (name, fields = [], glyph) => {
         const id = nid();
         const now = touch();
         const book: Book = {
           id,
           name: name.trim() || t("defaults.untitledBook"),
           fields: fields.map((field) => ({ ...field, id: field.id || nid() })),
-          glyph,
+          glyph: glyph ?? pickUnusedGlyph(get().books.map((item) => glyphForBook(item))),
           createdAt: now,
           updatedAt: now,
         };
@@ -279,7 +290,6 @@ export const useArchiveStore = create<ArchiveState>()(
           selectedBookId: bookId,
           selectedEntryId: id,
           selectedDocId: null,
-          preview: false,
         }));
         return id;
       },
@@ -347,7 +357,6 @@ export const useArchiveStore = create<ArchiveState>()(
           selectedDocId: id,
           selectedEntryId: entryId,
           selectedBookId: entry?.bookId ?? state.selectedBookId,
-          preview: false,
           entries: state.entries.map((item) =>
             item.id === entryId ? { ...item, updatedAt: now } : item,
           ),
@@ -420,22 +429,14 @@ export const useArchiveStore = create<ArchiveState>()(
     }),
     {
       name: "mojian-archive",
-      version: 4,
+      version: 7,
       storage:
         typeof window === "undefined"
           ? undefined
           : createJSONStorage(() => localStorage),
       skipHydration: true,
       migrate: (persisted, version) => {
-        const state = persisted as {
-          docs?: unknown[];
-          books?: Book[];
-          entries?: Entry[];
-          selectedBookId?: string | null;
-          selectedEntryId?: string | null;
-          selectedDocId?: string | null;
-          preview?: boolean;
-        };
+        const state = persisted as PersistedArchive;
         if (version < 2 && Array.isArray(state.docs)) {
           state.docs = state.docs.map((item) =>
             migrateNode(item as Partial<ArchiveNode>),
@@ -453,8 +454,86 @@ export const useArchiveStore = create<ArchiveState>()(
             state.selectedBookId = BOOK_DEMO;
             state.selectedEntryId = ENTRY_DEMO;
             state.selectedDocId = DOC_START;
-            state.preview = true;
           }
+        }
+        if (version < 5) {
+          state.docLayout = "live";
+          delete state.preview;
+          if (Array.isArray(state.docs)) {
+            state.docs = (state.docs as ArchiveNode[]).map((doc) => {
+              if (
+                doc.id === DOC_START &&
+                typeof doc.content === "string" &&
+                doc.content.includes("点顶栏眼睛图标")
+              ) {
+                return SEED_DOCS.find((item) => item.id === DOC_START) ?? doc;
+              }
+              if (
+                doc.id === "doc-files" &&
+                typeof doc.content === "string" &&
+                doc.content.includes("顶栏眼睛")
+              ) {
+                return SEED_DOCS.find((item) => item.id === "doc-files") ?? doc;
+              }
+              if (
+                doc.id === "doc-more" &&
+                typeof doc.content === "string" &&
+                doc.content.includes("或点顶栏的图片按钮") &&
+                !doc.content.includes("行首输入 `/`")
+              ) {
+                return SEED_DOCS.find((item) => item.id === "doc-more") ?? doc;
+              }
+              return doc;
+            });
+          }
+        }
+        if (version < 6) {
+          state.docLayout = state.docLayout === "preview" ? "preview" : "live";
+          if (Array.isArray(state.docs)) {
+            state.docs = (state.docs as ArchiveNode[]).map((doc) => {
+              if (
+                doc.id === DOC_START &&
+                typeof doc.content === "string" &&
+                (doc.content.includes("左边写、右边实时预览") ||
+                  doc.content.includes("点顶栏眼睛图标"))
+              ) {
+                return SEED_DOCS.find((item) => item.id === DOC_START) ?? doc;
+              }
+              if (
+                doc.id === "doc-files" &&
+                typeof doc.content === "string" &&
+                (doc.content.includes("左右分栏") || doc.content.includes("顶栏眼睛"))
+              ) {
+                return SEED_DOCS.find((item) => item.id === "doc-files") ?? doc;
+              }
+              return doc;
+            });
+          }
+        }
+        if (version < 7) {
+          if (Array.isArray(state.docs)) {
+            state.docs = (state.docs as ArchiveNode[]).map((doc) => {
+              if (
+                doc.id === "doc-more" &&
+                typeof doc.content === "string" &&
+                doc.content.includes("导出备份 / 导入备份") &&
+                !doc.content.includes("定时备份")
+              ) {
+                return SEED_DOCS.find((item) => item.id === "doc-more") ?? doc;
+              }
+              if (
+                doc.id === "doc-files" &&
+                typeof doc.content === "string" &&
+                doc.content.includes("点这里继续写")
+              ) {
+                return SEED_DOCS.find((item) => item.id === "doc-files") ?? doc;
+              }
+              return doc;
+            });
+          }
+        }
+        if (!state.docLayout || (state.docLayout as string) === "split" || (state.docLayout as string) === "source") {
+          state.docLayout = "live";
         }
         return state as ArchiveState;
       },
@@ -465,7 +544,7 @@ export const useArchiveStore = create<ArchiveState>()(
         selectedBookId: state.selectedBookId,
         selectedEntryId: state.selectedEntryId,
         selectedDocId: state.selectedDocId,
-        preview: state.preview,
+        docLayout: state.docLayout,
       }),
     },
   ),

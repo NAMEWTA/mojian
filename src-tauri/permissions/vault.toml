@@ -8,4 +8,10 @@ commands.allow = [
   "write_data",
   "write_asset",
   "read_asset",
+  "get_backup_dir",
+  "pick_backup_dir",
+  "write_backup",
+  "list_backups",
+  "read_backup",
+  "delete_backup",
 ]

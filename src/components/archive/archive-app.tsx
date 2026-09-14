@@ -156,7 +156,7 @@ export function ArchiveApp() {
           {sidebar}
         </aside>
 
-        <div className="flex min-h-0 min-w-0 flex-1 md:hidden">{main}</div>
+        <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:hidden">{main}</div>
 
         <div className="hidden h-full min-h-0 min-w-0 flex-1 md:flex">
           <Group orientation="horizontal" className="h-full min-h-0 w-full">
@@ -170,7 +170,7 @@ export function ArchiveApp() {
               {sidebar}
             </Panel>
             <Separator className="w-px bg-hairline hover:bg-primary" />
-            <Panel id="main" minSize="24rem" className="min-h-0">
+            <Panel id="main" minSize="24rem" className="flex h-full min-h-0 flex-col overflow-hidden">
               {main}
             </Panel>
           </Group>

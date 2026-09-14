@@ -1,7 +1,7 @@
 {
   "name": "mojian",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "sideEffects": false,
   "type": "module",
   "overrides": {
@@ -21,7 +21,7 @@
     "tauri": "tauri",
     "dist": "tauri build",
     "check:auth": "node scripts/check-auth-invariant.mjs",
-    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts",
+    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/backup.test.ts",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

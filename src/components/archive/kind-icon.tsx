@@ -1,19 +1,66 @@
 import {
+  Bookmark,
   Briefcase,
   Building2,
+  Calendar,
+  Camera,
+  Code,
+  Compass,
   FileText,
+  Flag,
+  Flame,
   Folder,
   FolderOpen,
+  Gift,
+  Globe,
+  Heart,
+  Home,
   IdCard,
+  Leaf,
   Library,
+  Lightbulb,
+  Map,
+  Music,
   NotebookPen,
+  Palette,
+  Plane,
+  Sparkles,
+  Star,
   UserRound,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 import type { BookGlyph } from "@/lib/archive/types";
 import { cn } from "@/lib/utils";
 
 export type TreeKind = "book" | "entry" | "folder" | "file";
+
+export const BOOK_ICONS: Record<BookGlyph, LucideIcon> = {
+  library: Library,
+  notes: NotebookPen,
+  people: Users,
+  company: Building2,
+  star: Star,
+  heart: Heart,
+  home: Home,
+  briefcase: Briefcase,
+  globe: Globe,
+  map: Map,
+  calendar: Calendar,
+  flag: Flag,
+  music: Music,
+  camera: Camera,
+  palette: Palette,
+  code: Code,
+  leaf: Leaf,
+  flame: Flame,
+  sparkles: Sparkles,
+  compass: Compass,
+  gift: Gift,
+  plane: Plane,
+  lightbulb: Lightbulb,
+  bookmark: Bookmark,
+};
 
 export function KindIcon({
   kind,
@@ -27,14 +74,7 @@ export function KindIcon({
   className?: string;
 }) {
   if (kind === "book") {
-    const Icon =
-      glyph === "people"
-        ? Users
-        : glyph === "company"
-          ? Building2
-          : glyph === "notes"
-            ? NotebookPen
-            : Library;
+    const Icon = BOOK_ICONS[glyph] ?? Library;
     return (
       <span className={cn("kind-icon kind-icon-book", className)} data-glyph={glyph}>
         <Icon />

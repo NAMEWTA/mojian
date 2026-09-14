@@ -41,7 +41,7 @@ jobs:
           releaseBody: |
             Mojian / 墨笺 desktop (Tauri 2).
             Windows x64 NSIS installer and macOS Apple Silicon DMG.
-            First launch includes a single demo book that walks through the tree, fields, documents, images, and backup.
+            Live preview editor with slash commands, book icons, and scheduled rolling backups.
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}

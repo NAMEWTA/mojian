@@ -12,7 +12,7 @@
 
 第一次打开会看到一本**演示簿**，里面有演示档案、演示文件夹和带截图的说明文稿，按 01 → 04 走一遍即可上手。看完后可以整本删掉。
 
-数据默认写在 `Documents/mojian/mojian.json`。也可以改绑到 iCloud、OneDrive、坚果云里的文件夹，换电脑后再选同一位置即可迁移。随时可导出 / 导入备份。图片保存在同一目录下的 `assets/`，Markdown 里用相对路径 `assets/YYYY-MM-DD-uuid.ext`。
+数据默认写在 `Documents/mojian/mojian.json`。也可以改绑到 iCloud、OneDrive、坚果云里的文件夹，换电脑后再选同一位置即可迁移。随时可导出 / 导入备份。可指定备份目录、周期与滚动保留；打开应用时默认先备份一次。图片保存在同一目录下的 `assets/`，Markdown 里用相对路径 `assets/YYYY-MM-DD-uuid.ext`。文稿有两种写法：实时预览编辑（输入 `/` 可插入标题、列表等），以及仅预览。
 
 ## 仓库布局
 
@@ -73,8 +73,8 @@ Mac 未签名时，第一次打开请到「系统设置 → 隐私与安全性�
 打一个版本标签即会同时打 Windows x64 与 Mac arm64 安装包，并挂到 GitHub Release：
 
 ```bash
-git tag v0.0.2
-git push origin v0.0.2
+git tag v0.0.3
+git push origin v0.0.3
 ```
 
 也可以在 Actions 里手动跑 **Release desktop**。
