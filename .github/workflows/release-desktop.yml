@@ -9,44 +9,36 @@ permissions:
   contents: write
 
 jobs:
-  desktop:
+  publish-tauri:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
-            args: --win --x64
-          - os: macos-14
-            args: --mac --arm64
-    runs-on: ${{ matrix.os }}
+          - platform: windows-latest
+            args: --target x86_64-pc-windows-msvc
+          - platform: macos-14
+            args: --target aarch64-apple-darwin
+    runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-14' && 'aarch64-apple-darwin' || 'x86_64-pc-windows-msvc' }}
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
       - run: npm ci
-      - name: Build desktop server
+      - uses: tauri-apps/tauri-action@v0
         env:
-          MOJIAN_DESKTOP: "1"
-        run: npm run build:desktop
-      - name: Package
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: "false"
-        run: npx electron-builder --publish never ${{ matrix.args }}
-      - uses: actions/upload-artifact@v4
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: mojian-${{ matrix.os }}
-          path: |
-            release/*.exe
-            release/*.dmg
-            release/*.zip
-            release/*.yml
-      - name: Attach to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            release/*.exe
-            release/*.dmg
-            release/*.zip
+          tagName: ${{ github.ref_name }}
+          releaseName: 墨笺 ${{ github.ref_name }}
+          releaseBody: 墨笺桌面端（Tauri 2）。Windows x64 NSIS 安装包与 macOS Apple Silicon DMG。
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}

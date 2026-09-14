@@ -16,3 +16,5 @@ screenshots
 AGENTS.md
 AGENTS.project.md
 startup.sh
+src-tauri/target
+src-tauri/gen

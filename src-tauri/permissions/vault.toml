@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "vault"
+description = "Read and write the 墨笺 vault file"
+commands.allow = ["pick_directory", "get_data_dir", "read_data", "write_data"]

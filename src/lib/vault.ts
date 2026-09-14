@@ -1,3 +1,10 @@
+import {
+  isDesktopApp,
+  nativeGetDataDir,
+  nativePickDirectory,
+  nativeReadData,
+  nativeWriteData,
+} from "@/lib/desktop";
 import { useArchiveStore } from "@/lib/archive/store";
 import type { ArchiveNode, Book, Entry } from "@/lib/archive/types";
 import { useNotesStore } from "@/lib/notes/store";
@@ -75,9 +82,7 @@ export function isBackupFile(value: unknown): value is BackupFile {
   return data.kind === "mojian-backup" && data.version === 1 && Array.isArray(data.notes);
 }
 
-export function isDesktopApp(): boolean {
-  return typeof window !== "undefined" && Boolean(window.mojianDesktop);
-}
+export { isDesktopApp };
 
 export function canPickDirectory(): boolean {
   if (isDesktopApp()) return true;
@@ -85,10 +90,8 @@ export function canPickDirectory(): boolean {
 }
 
 async function writeDesktop(): Promise<void> {
-  const api = window.mojianDesktop;
-  if (!api) return;
-  await api.writeData(`${JSON.stringify(takeSnapshot(), null, 2)}\n`);
-  const folder = await api.getDataDir();
+  await nativeWriteData(`${JSON.stringify(takeSnapshot(), null, 2)}\n`);
+  const folder = await nativeGetDataDir();
   useVaultUi.getState().setStatus({
     bound: true,
     folderName: folder,
@@ -97,7 +100,6 @@ async function writeDesktop(): Promise<void> {
     message: null,
   });
 }
-
 
 function openIdb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -155,8 +157,8 @@ export async function writeToDirectory(handle = boundHandle): Promise<void> {
 }
 
 export async function pickDirectory(): Promise<void> {
-  if (isDesktopApp() && window.mojianDesktop) {
-    const dir = await window.mojianDesktop.pickDirectory();
+  if (isDesktopApp()) {
+    const dir = await nativePickDirectory();
     if (!dir) return;
     useVaultUi.getState().setStatus({
       bound: true,
@@ -183,14 +185,14 @@ export async function pickDirectory(): Promise<void> {
 }
 
 export async function restoreDirectory(): Promise<void> {
-  if (isDesktopApp() && window.mojianDesktop) {
-    const dir = await window.mojianDesktop.getDataDir();
+  if (isDesktopApp()) {
+    const dir = await nativeGetDataDir();
     useVaultUi.getState().setStatus({
       supported: true,
       bound: Boolean(dir),
       folderName: dir,
     });
-    const text = await window.mojianDesktop.readData();
+    const text = await nativeReadData();
     if (text) {
       try {
         const parsed = JSON.parse(text) as unknown;
