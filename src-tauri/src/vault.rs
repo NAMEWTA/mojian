@@ -19,7 +19,6 @@ struct Meta {
     backup_dir: Option<String>,
 }
 
-
 fn meta_path(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = app
         .path()
@@ -79,13 +78,10 @@ fn atomic_write(path: &Path, contents: &str) -> Result<(), String> {
 pub fn ensure_default_dir(app: &AppHandle) -> Result<(), String> {
     let dir = data_dir(app)?;
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    if read_meta(app).data_dir.is_none() {
-        write_meta(
-            app,
-            &Meta {
-                data_dir: Some(dir.to_string_lossy().into_owned()),
-            },
-        )?;
+    let mut meta = read_meta(app);
+    if meta.data_dir.is_none() {
+        meta.data_dir = Some(dir.to_string_lossy().into_owned());
+        write_meta(app, &meta)?;
     }
     Ok(())
 }
@@ -108,12 +104,9 @@ pub fn pick_directory(app: AppHandle) -> Result<Option<String>, String> {
     };
     let dir = folder.to_string();
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    write_meta(
-        &app,
-        &Meta {
-            data_dir: Some(dir.clone()),
-        },
-    )?;
+    let mut meta = read_meta(&app);
+    meta.data_dir = Some(dir.clone());
+    write_meta(&app, &meta)?;
     Ok(Some(dir))
 }
 
@@ -374,4 +367,3 @@ mod tests {
         assert!(!is_backup_name("notes.txt"));
     }
 }
-
