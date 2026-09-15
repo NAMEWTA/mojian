@@ -4,6 +4,12 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag
+        required: true
+        type: string
+        default: v0.0.3
 
 permissions:
   contents: write
@@ -36,8 +42,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: Mojian ${{ github.ref_name }}
+          tagName: ${{ github.event.inputs.tag || github.ref_name }}
+          releaseName: Mojian ${{ github.event.inputs.tag || github.ref_name }}
           releaseBody: |
             Mojian / 墨笺 desktop (Tauri 2).
             Windows x64 NSIS installer and macOS Apple Silicon DMG.
